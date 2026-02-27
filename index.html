@@ -34,9 +34,12 @@
             transition: all 0.2s ease;
             border-left-width: 4px;
             border-radius: 0.75rem;
+        }
+        .timeline-row:not(.running-row):not(.over-row):hover { 
+            transform: translateX(4px); 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
             cursor: pointer;
         }
-        .timeline-row:hover { transform: translateX(4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         
         .timeline-row.over-standard {
             background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
@@ -45,6 +48,23 @@
         .dark .timeline-row.over-standard {
             background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
             border-left-color: #ef4444 !important;
+        }
+        
+        .running-row {
+            border-left-color: #10b981 !important;
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        }
+        .dark .running-row {
+            background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+        }
+        
+        .over-row {
+            border-left-color: #f59e0b !important;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        }
+        .dark .over-row {
+            background: linear-gradient(135deg, #92400e 0%, #b45309 100%);
+            border-left-color: #fbbf24 !important;
         }
         
         .btn-press:active { transform: scale(0.97); }
@@ -102,6 +122,31 @@
         .kode-9 { background: #ffedd5; color: #9a3412; }
         
         .hidden { display: none; }
+        
+        .stop-button {
+            transition: all 0.2s ease;
+        }
+        .stop-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .summary-section {
+            border-left: 4px solid;
+            transition: all 0.2s ease;
+        }
+        .summary-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .score-card-item {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 1rem;
+            padding: 1rem;
+        }
+        .dark .score-card-item {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased">
@@ -394,6 +439,12 @@
                         
                         <div id="timelineContainer" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
                     </div>
+
+                    <!-- RINGKASAN SECTION -->
+                    <div id="summaryContainer" class="mt-8"></div>
+
+                    <!-- SCORE CARD SECTION -->
+                    <div id="scoreCardContainer" class="mt-8"></div>
 
                     <!-- END SHIFT BUTTON -->
                     <div class="mt-8 flex justify-end">
@@ -748,9 +799,6 @@
                 <div id="editStandardContainer" class="hidden">
                     <label class="block text-sm font-medium mb-2">DURASI STANDARD (MENIT)</label>
                     <input type="number" id="editDurasiStandard" class="w-full p-4 border-2 rounded-xl text-lg bg-gray-100" readonly>
-                    <div id="editOverWarning" class="text-sm text-red-600 mt-1 hidden">
-                        ⚠️ MELEBIHI STANDARD!
-                    </div>
                 </div>
 
                 <div id="editDynamicFields" class="space-y-4"></div>
@@ -851,8 +899,9 @@ let activeActivity = null;
 let auditLogs = [];
 let shiftEnded = false;
 
-// Kode yang WAJIB punya standard
+// Kode yang WAJIB punya standard dan termasuk ODT
 const KODE_WITH_STANDARD = ['1', '5', '7', '8'];
+const ODT_CODES = ['1', '2', '5', '6', '7', '8']; // Kode 2 tetap dihitung sebagai production time
 
 // Master data dengan kegiatan per kode
 let machines = [
@@ -1052,6 +1101,8 @@ function logout() {
         }
         
         renderMinorStoppages();
+        renderSummary();
+        renderScoreCard();
     }
 }
 
@@ -1189,7 +1240,7 @@ function addKegiatanField(kode) {
     
     div.innerHTML = `
         <input type="text" class="kegiatan-nama flex-1 p-2 border rounded-lg" placeholder="NAMA KEGIATAN">
-        ${hasStandard ? '<input type="number" class="kegiatan-durasi w-24 p-2 border rounded-lg" placeholder="MENIT" min="0">' : '<input type="hidden" class="kegiatan-durasi" value="0">'}
+        ${hasStandard ? '<input type="number" class="kegiatan-durasi w-24 p-2 border rounded-lg" placeholder="MENIT" min="1">' : '<input type="hidden" class="kegiatan-durasi" value="0">'}
         <button type="button" onclick="removeKegiatanField('kegiatan-${kode}-${kegiatanCounter}')" class="text-red-500 hover:text-red-700">
             <i class="fas fa-times"></i>
         </button>
@@ -1601,7 +1652,7 @@ function changeMachine() {
         
         // Buat baris aktif untuk kegiatan sekarang
         const activeRow = {
-            id: 'row-' + Date.now() + 1,
+            id: 'row-' + (Date.now() + 1),
             startTime: getCurrentTime(),
             endTime: null,
             kode: null,
@@ -1619,6 +1670,8 @@ function changeMachine() {
         
         renderTimeline();
         renderMinorStoppages();
+        renderSummary();
+        renderScoreCard();
         addAuditLog('MACHINE', `PILIH MESIN ${currentMachine}`);
     } else {
         document.getElementById('displayMachineName').textContent = '-';
@@ -1626,6 +1679,8 @@ function changeMachine() {
         updateButtonsState();
         document.getElementById('timelineContainer').innerHTML = '<div class="text-center text-gray-400 py-8"><i class="fas fa-arrow-up text-3xl mb-2"></i><p>PILIH MESIN TERLEBIH DAHULU</p></div>';
         renderMinorStoppages();
+        renderSummary();
+        renderScoreCard();
     }
 }
 
@@ -1716,28 +1771,50 @@ function renderTimeline() {
     
     let html = '';
     
-    timeline.forEach(row => {
+    // Urutkan timeline berdasarkan startTime
+    const sortedTimeline = [...timeline].sort((a, b) => {
+        return a.startTime.localeCompare(b.startTime);
+    });
+    
+    sortedTimeline.forEach(row => {
         const isActive = row.isActive ? 'border-2 border-blue-500 shadow-lg' : '';
         const overStandard = row.overStandard ? 'over-standard' : '';
+        const isRunning = row.kode === '2' ? 'running-row' : '';
+        const isOver = row.details?.isOver ? 'over-row' : '';
         const durasi = row.endTime ? calculateDuration(row.startTime, row.endTime) : null;
         
+        // KODE 2 dan baris hasil split tidak bisa di klik
+        const clickHandler = (row.kode === '2' || row.details?.isOver) ? '' : `onclick="openEditModal('${row.id}')"`;
+        
         html += `
-            <div class="timeline-row ${overStandard} p-4 rounded-xl shadow-sm ${isActive}" onclick="openEditModal('${row.id}')">
+            <div class="timeline-row ${overStandard} ${isRunning} ${isOver} p-4 rounded-xl shadow-sm ${isActive}" ${clickHandler}>
                 <div class="flex justify-between items-start">
                     <div class="flex-1">
                         <div class="flex items-center flex-wrap gap-2 mb-1">
                             <span class="font-bold text-lg">${row.startTime} - ${row.endTime || '<span class="text-blue-500">SEKARANG</span>'}</span>
                             ${row.kode ? `<span class="kode-badge kode-${row.kode}">KODE ${row.kode}</span>` : '<span class="text-xs text-red-500">(BELUM DIISI)</span>'}
                             ${row.isActive ? '<span class="px-2 py-1 bg-blue-500 text-white rounded-full text-xs font-medium animate-pulse">AKTIF</span>' : ''}
+                            ${row.details?.isOver ? '<span class="px-2 py-1 bg-orange-500 text-white rounded-full text-xs font-medium">OVER</span>' : ''}
                         </div>
                         ${row.kegiatanNama ? `<div class="text-sm font-medium">${row.kegiatanNama}</div>` : ''}
                         ${row.activity ? `<div class="text-sm text-gray-600">${row.activity}</div>` : ''}
                         <div class="text-xs text-gray-500 space-x-2 mt-1">
                             ${row.durasiStandard > 0 ? `<span>STANDARD: ${row.durasiStandard} MENIT</span>` : ''}
-                            ${durasi ? `<span>AKTUAL: ${durasi} MENIT</span>` : ''}
+                            ${durasi ? `<span class="font-semibold">AKTUAL: ${durasi} MENIT</span>` : ''}
                             ${row.overStandard ? '<span class="text-red-600 font-bold">⚠️ OVER STANDARD</span>' : ''}
                             ${renderRowDetails(row)}
                         </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        ${row.isActive ? `
+                            <button onclick="event.stopPropagation(); stopActiveRow('${row.id}')" class="stop-button bg-red-500 text-white px-3 py-1 rounded-lg text-sm font-bold hover:bg-red-600 transition-all flex items-center gap-1">
+                                <i class="fas fa-stop text-xs"></i>
+                                <span>STOP</span>
+                            </button>
+                        ` : ''}
+                        ${row.kode === '2' ? '<i class="fas fa-lock text-gray-400" title="TIDAK BISA DIEDIT"></i>' : ''}
+                        ${row.details?.isOver ? '<i class="fas fa-lock text-gray-400" title="OVER DARI SPLIT OTOMATIS"></i>' : ''}
+                        ${!row.isActive && row.kode !== '2' && !row.details?.isOver ? '<i class="fas fa-chevron-right text-gray-400"></i>' : ''}
                     </div>
                 </div>
             </div>
@@ -1745,6 +1822,41 @@ function renderTimeline() {
     });
     
     container.innerHTML = html;
+}
+
+// Fungsi untuk menghentikan baris aktif dari tombol stop di timeline
+function stopActiveRow(rowId) {
+    const row = timeline.find(r => r.id === rowId);
+    if (!row || !row.isActive) return;
+    
+    // Hentikan baris ini
+    row.isActive = false;
+    row.endTime = getCurrentTime();
+    
+    // Buat baris baru untuk kegiatan berikutnya
+    const newRow = {
+        id: 'row-' + Date.now(),
+        startTime: getCurrentTime(),
+        endTime: null,
+        kode: null,
+        kegiatanId: null,
+        kegiatanNama: null,
+        durasiStandard: 0,
+        durasiAktual: null,
+        activity: null,
+        details: {},
+        isActive: true,
+        overStandard: false
+    };
+    
+    timeline.push(newRow);
+    activeActivity = newRow;
+    
+    renderTimeline();
+    updateButtonsState();
+    renderSummary();
+    renderScoreCard();
+    addAuditLog('ACTIVITY', `HENTIKAN KEGIATAN DI ${currentMachine}`);
 }
 
 function renderRowDetails(row) {
@@ -1755,6 +1867,237 @@ function renderRowDetails(row) {
         if (row.details.masalah) details += `<span class="inline-block mr-3"><i class="fas fa-exclamation-circle mr-1"></i>${row.details.masalah}</span>`;
     }
     return details;
+}
+
+// ==================== FUNGSI ADD MINUTES YANG SUDAH DIPERBAIKI ====================
+function addMinutes(time, minutes) {
+    const [hours, mins] = time.split(':').map(Number);
+    let totalMinutes = hours * 60 + mins + minutes;
+    
+    // Handle jika negatif (mundur ke hari sebelumnya)
+    if (totalMinutes < 0) {
+        totalMinutes += 24 * 60; // Tambah 1 hari
+    }
+    
+    const newHours = Math.floor(totalMinutes / 60) % 24;
+    const newMins = totalMinutes % 60;
+    return `${newHours.toString().padStart(2, '0')}:${newMins.toString().padStart(2, '0')}`;
+}
+
+// ==================== SUMMARY ====================
+function calculateSummary() {
+    let odtTotal = 0;
+    let lineStopTotal = 0;
+    let lineStopNonMesinTotal = 0;
+    
+    const odtDetails = [];
+    const lineStopDetails = [];
+    const lineStopNonMesinDetails = [];
+    
+    timeline.forEach(row => {
+        if (!row.endTime || !row.kode) return;
+        
+        const durasi = calculateDuration(row.startTime, row.endTime);
+        
+        // ODT: Kode 1,5,6,7,8 (Kode 2 Running tidak dihitung sebagai downtime)
+        if (['1', '5', '6', '7', '8'].includes(row.kode) && !row.details?.isOver) {
+            odtTotal += durasi;
+            odtDetails.push({
+                nama: row.kegiatanNama || `KODE ${row.kode}`,
+                durasi: durasi,
+                standard: row.durasiStandard,
+                isOver: row.details?.isOver || false
+            });
+        }
+        // Line Stop Mesin: Kode 3
+        else if (row.kode === '3') {
+            lineStopTotal += durasi;
+            lineStopDetails.push({
+                nama: row.kegiatanNama || 'LINE STOP',
+                durasi: durasi,
+                wr: row.details?.wr
+            });
+        }
+        // Line Stop Non Mesin: Kode 9 + hasil split over
+        else if (row.kode === '9' || row.details?.isOver) {
+            lineStopNonMesinTotal += durasi;
+            lineStopNonMesinDetails.push({
+                nama: row.kegiatanNama || 'LINE STOP NON MESIN',
+                durasi: durasi,
+                isOver: row.details?.isOver || false
+            });
+        }
+    });
+    
+    return {
+        odt: { total: odtTotal, details: odtDetails },
+        lineStop: { total: lineStopTotal, details: lineStopDetails },
+        lineStopNonMesin: { total: lineStopNonMesinTotal, details: lineStopNonMesinDetails }
+    };
+}
+
+function renderSummary() {
+    const container = document.getElementById('summaryContainer');
+    if (!container) return;
+    
+    if (!currentMachine || timeline.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    const summary = calculateSummary();
+    
+    let html = `
+        <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl mb-6">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-chart-pie text-blue-500"></i>
+                RINGKASAN
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- ODT Section -->
+                <div class="summary-section bg-white dark:bg-gray-800 p-4 rounded-xl border-l-4 border-blue-500">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="font-bold text-blue-600">OFFICIAL DOWNTIME</span>
+                        <span class="ml-auto font-bold text-blue-600">${summary.odt.total} MENIT</span>
+                    </div>
+                    <div class="space-y-2 max-h-40 overflow-y-auto">
+                        ${summary.odt.details.length > 0 ? summary.odt.details.map(d => `
+                            <div class="text-sm flex justify-between items-center">
+                                <span>${d.nama}</span>
+                                <span class="font-medium">${d.durasi} MENIT</span>
+                            </div>
+                        `).join('') : '<div class="text-sm text-gray-500">TIDAK ADA DATA</div>'}
+                    </div>
+                </div>
+                
+                <!-- Line Stop Mesin -->
+                <div class="summary-section bg-white dark:bg-gray-800 p-4 rounded-xl border-l-4 border-red-500">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="font-bold text-red-600">LINE STOP MESIN</span>
+                        <span class="ml-auto font-bold text-red-600">${summary.lineStop.total} MENIT</span>
+                    </div>
+                    <div class="space-y-2 max-h-40 overflow-y-auto">
+                        ${summary.lineStop.details.length > 0 ? summary.lineStop.details.map(d => `
+                            <div class="text-sm flex justify-between items-center">
+                                <span>${d.nama}</span>
+                                <span class="font-medium">${d.durasi} MENIT</span>
+                            </div>
+                        `).join('') : '<div class="text-sm text-gray-500">TIDAK ADA DATA</div>'}
+                    </div>
+                </div>
+                
+                <!-- Line Stop Non Mesin -->
+                <div class="summary-section bg-white dark:bg-gray-800 p-4 rounded-xl border-l-4 border-yellow-500">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="font-bold text-yellow-600">LINE STOP NON MESIN</span>
+                        <span class="ml-auto font-bold text-yellow-600">${summary.lineStopNonMesin.total} MENIT</span>
+                    </div>
+                    <div class="space-y-2 max-h-40 overflow-y-auto">
+                        ${summary.lineStopNonMesin.details.length > 0 ? summary.lineStopNonMesin.details.map(d => `
+                            <div class="text-sm flex justify-between items-center">
+                                <span>${d.nama}</span>
+                                <span class="font-medium">${d.durasi} MENIT</span>
+                            </div>
+                        `).join('') : '<div class="text-sm text-gray-500">TIDAK ADA DATA</div>'}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// ==================== SCORE CARD ====================
+function calculateScoreCard() {
+    const summary = calculateSummary();
+    const jamKerja = currentShift.duration;
+    
+    // Total downtime
+    const totalLineStop = summary.lineStop.total;
+    const totalLineStopNonMesin = summary.lineStopNonMesin.total;
+    const totalODT = summary.odt.total;
+    
+    // Rumus Availability
+    // (JK - LS - LSNM - ODT) / (JK - ODT)
+    const pembilang = jamKerja - totalLineStop - totalLineStopNonMesin - totalODT;
+    const penyebutAvailability = jamKerja - totalODT;
+    const penyebut365 = jamKerja;
+    
+    const availability = penyebutAvailability > 0 ? (pembilang / penyebutAvailability * 100).toFixed(1) : 0;
+    const availability365 = penyebut365 > 0 ? (pembilang / penyebut365 * 100).toFixed(1) : 0;
+    
+    return {
+        availability,
+        availability365,
+        // Performance, Quality, OEE menyusul nanti
+        performance: '0',
+        quality: '0',
+        oeeActual: '0',
+        oee365: '0'
+    };
+}
+
+function renderScoreCard() {
+    const container = document.getElementById('scoreCardContainer');
+    if (!container) return;
+    
+    if (!currentMachine || timeline.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    const scores = calculateScoreCard();
+    
+    let html = `
+        <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl mb-6">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-chart-line text-green-500"></i>
+                SCORE CARD
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Availability -->
+                <div class="score-card-item">
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">AVAILABILITY</div>
+                    <div class="text-3xl font-bold text-blue-600">${scores.availability}%</div>
+                </div>
+                
+                <!-- Availability 365 -->
+                <div class="score-card-item">
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">AVAILABILITY 365</div>
+                    <div class="text-3xl font-bold text-green-600">${scores.availability365}%</div>
+                </div>
+                
+                <!-- Performance (placeholder) -->
+                <div class="score-card-item">
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">PERFORMANCE</div>
+                    <div class="text-3xl font-bold text-purple-600">${scores.performance}%</div>
+                </div>
+                
+                <!-- Quality Rate (placeholder) -->
+                <div class="score-card-item">
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">QUALITY RATE</div>
+                    <div class="text-3xl font-bold text-yellow-600">${scores.quality}%</div>
+                </div>
+                
+                <!-- OEE Actual (placeholder) -->
+                <div class="score-card-item">
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">OEE ACTUAL</div>
+                    <div class="text-3xl font-bold text-red-600">${scores.oeeActual}%</div>
+                </div>
+                
+                <!-- OEE 365 (placeholder) -->
+                <div class="score-card-item">
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">OEE 365</div>
+                    <div class="text-3xl font-bold text-indigo-600">${scores.oee365}%</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
 }
 
 // ==================== KEGIATAN DROPDOWN HELPERS ====================
@@ -1775,6 +2118,18 @@ function getKegiatanOptions(kode) {
 function openEditModal(rowId) {
     const row = timeline.find(r => r.id === rowId);
     if (!row) return;
+    
+    // KODE 2 tidak bisa diedit
+    if (row.kode === '2') {
+        alert('KEGIATAN RUNNING TIDAK BISA DIEDIT!');
+        return;
+    }
+    
+    // Baris hasil split tidak bisa diedit
+    if (row.details?.isOver) {
+        alert('BARIS INI ADALAH HASIL SPLIT OTOMATIS DAN TIDAK BISA DIEDIT!');
+        return;
+    }
     
     // Hitung durasi otomatis
     const endTime = row.endTime || getCurrentTime();
@@ -1876,10 +2231,8 @@ function updateEditDurasiStandard() {
     const kodeSelect = document.getElementById('editKode');
     const kegiatanSelect = document.getElementById('editKegiatan');
     const durasiStandardInput = document.getElementById('editDurasiStandard');
-    const durasiInput = document.getElementById('editDuration');
-    const warningDiv = document.getElementById('editOverWarning');
     
-    if (!kodeSelect || !kegiatanSelect || !durasiStandardInput || !durasiInput || !warningDiv) return;
+    if (!kodeSelect || !kegiatanSelect || !durasiStandardInput) return;
     
     const kode = kodeSelect.value;
     if (kode === '2' || !KODE_WITH_STANDARD.includes(kode)) return;
@@ -1888,15 +2241,6 @@ function updateEditDurasiStandard() {
     const standard = selectedOption ? parseInt(selectedOption.getAttribute('data-standard')) || 0 : 0;
     
     durasiStandardInput.value = standard;
-    
-    // Cek over standard
-    const durasi = parseInt(durasiInput.value) || 0;
-    
-    if (durasi > standard && standard > 0) {
-        warningDiv.classList.remove('hidden');
-    } else {
-        warningDiv.classList.add('hidden');
-    }
 }
 
 function updateEditFormFields(kode, details = {}) {
@@ -1948,6 +2292,8 @@ function saveEditActivity() {
         return;
     }
     
+    const durasiAktual = parseInt(document.getElementById('editDuration')?.value) || 0;
+    
     // Untuk KODE 2, tidak perlu kegiatan
     if (newKode === '2') {
         row.kode = '2';
@@ -1965,31 +2311,60 @@ function saveEditActivity() {
         
         const selectedOption = kegiatanSelect.options[kegiatanSelect.selectedIndex];
         const durasiStandard = parseInt(selectedOption.getAttribute('data-standard')) || 0;
-        const durasiAktual = parseInt(document.getElementById('editDuration')?.value) || 0;
         
         row.kode = newKode;
         row.kegiatanId = kegiatanSelect.value;
         row.kegiatanNama = selectedOption.getAttribute('data-nama');
         row.durasiStandard = durasiStandard;
         row.overStandard = (durasiAktual > durasiStandard && durasiStandard > 0);
-    }
-    
-    // Update details
-    if (newKode === '3') {
-        row.details = {
-            masalah: document.getElementById('editMasalah')?.value || '',
-            wr: document.getElementById('editWR')?.value || '',
-            tindakan: document.getElementById('editTindakan')?.value || ''
-        };
-    } else if (newKode === '1' || newKode === '7') {
-        row.details = {
-            batch: document.getElementById('editBatch')?.value || ''
-        };
-    } else {
-        row.details = {};
+        
+        // Update details
+        if (newKode === '3') {
+            row.details = {
+                masalah: document.getElementById('editMasalah')?.value || '',
+                wr: document.getElementById('editWR')?.value || '',
+                tindakan: document.getElementById('editTindakan')?.value || ''
+            };
+        } else if (newKode === '1' || newKode === '7') {
+            row.details = {
+                batch: document.getElementById('editBatch')?.value || ''
+            };
+        } else {
+            row.details = {};
+        }
+        
+        // SPLIT LOGIC: Jika over standard, buat baris baru untuk kelebihan
+        if (row.overStandard && KODE_WITH_STANDARD.includes(newKode)) {
+            const kelebihan = durasiAktual - durasiStandard;
+            
+            // Hitung waktu mulai untuk baris over (mundur dari endTime)
+            const overStartTime = addMinutes(row.endTime, -kelebihan);
+            
+            // Ubah durasi baris ini menjadi standard
+            const overRow = {
+                id: 'row-' + Date.now() + '-over',
+                startTime: overStartTime,
+                endTime: row.endTime,
+                kode: '9',
+                kegiatanId: 'k9-over',
+                kegiatanNama: `${row.kegiatanNama} OVER (${kelebihan} MENIT)`,
+                durasiStandard: 0,
+                durasiAktual: kelebihan,
+                activity: `${row.kegiatanNama} OVER`,
+                details: { ...row.details, isOver: true },
+                isActive: false,
+                overStandard: false
+            };
+            
+            // Insert setelah baris utama
+            const index = timeline.findIndex(r => r.id === row.id);
+            timeline.splice(index + 1, 0, overRow);
+        }
     }
     
     renderTimeline();
+    renderSummary();
+    renderScoreCard();
     closeEditModal();
     addAuditLog('ACTIVITY', `EDIT KEGIATAN: ${newKode} - ${row.kegiatanNama || ''}`);
 }
@@ -2036,6 +2411,8 @@ function handleRunning() {
     timeline.push(newActivity);
     activeActivity = newActivity;
     renderTimeline();
+    renderSummary();
+    renderScoreCard();
     updateButtonsState();
     addAuditLog('ACTIVITY', `MULAI RUNNING DI ${currentMachine}`);
 }
@@ -2068,6 +2445,8 @@ function handleStop() {
     timeline.push(newRow);
     activeActivity = newRow;
     renderTimeline();
+    renderSummary();
+    renderScoreCard();
     updateButtonsState();
     addAuditLog('ACTIVITY', `TAMBAH BARIS BARU DI ${currentMachine}`);
 }
@@ -2153,6 +2532,8 @@ function endShift() {
         shiftEnded = true;
         updateButtonsState();
         renderTimeline();
+        renderSummary();
+        renderScoreCard();
         addAuditLog('SHIFT', `SHIFT SELESAI UNTUK ${currentMachine}`);
         alert('SHIFT SELESAI! DATA TERSIMPAN.');
     }
