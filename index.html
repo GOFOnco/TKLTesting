@@ -1,0 +1,2207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OEE SYSTEM | TKL AVAILABILITY</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { 
+            font-family: 'Inter', sans-serif; 
+            letter-spacing: 0.025em;
+            text-transform: uppercase;
+        }
+        
+        * { transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease; }
+        
+        .dashboard-card { transition: all 0.3s ease; }
+        .dashboard-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .dark ::-webkit-scrollbar-track { background: #1e293b; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        
+        .timeline-row { 
+            transition: all 0.2s ease;
+            border-left-width: 4px;
+            border-radius: 0.75rem;
+            cursor: pointer;
+        }
+        .timeline-row:hover { transform: translateX(4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        .timeline-row.over-standard {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-left-color: #dc2626 !important;
+        }
+        .dark .timeline-row.over-standard {
+            background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+            border-left-color: #ef4444 !important;
+        }
+        
+        .btn-press:active { transform: scale(0.97); }
+        
+        .status-dot { width: 12px; height: 12px; border-radius: 9999px; display: inline-block; }
+        .status-dot.pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .modal-backdrop { backdrop-filter: blur(4px); }
+        
+        .minor-item {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+        }
+        .dark .minor-item {
+            background: linear-gradient(135deg, #92400e 0%, #b45309 100%);
+            border-left: 4px solid #fbbf24;
+        }
+        
+        .target-badge {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        }
+        
+        .product-form {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e6f0fa 100%);
+            border: 2px solid #3b82f6;
+        }
+        .dark .product-form {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            border: 2px solid #60a5fa;
+        }
+        
+        .kode-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .kode-1 { background: #fef3c7; color: #92400e; }
+        .kode-2 { background: #dcfce7; color: #166534; }
+        .kode-3 { background: #fee2e2; color: #991b1b; }
+        .kode-5 { background: #e0e7ff; color: #3730a3; }
+        .kode-6 { background: #f1d7e4; color: #831843; }
+        .kode-7 { background: #cffafe; color: #155e75; }
+        .kode-8 { background: #f3e8ff; color: #6b21a8; }
+        .kode-9 { background: #ffedd5; color: #9a3412; }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased">
+
+<div id="app" class="min-h-screen flex flex-col">
+    <!-- LOGIN PAGE -->
+    <div id="login-page" class="page">
+        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-4">
+            <div class="absolute inset-0 overflow-hidden">
+                <div class="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full opacity-5 blur-3xl"></div>
+                <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400 rounded-full opacity-5 blur-3xl"></div>
+            </div>
+            
+            <div class="relative bg-white/10 dark:bg-gray-800/50 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/20">
+                <div class="text-center mb-8">
+                    <div class="inline-block p-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-4">
+                        <i class="fas fa-chart-line text-white text-4xl"></i>
+                    </div>
+                    <h1 class="text-4xl font-extrabold text-white mb-2">OEE SYSTEM</h1>
+                    <p class="text-blue-200 text-sm font-medium">TKL AVAILABILITY TRACKER</p>
+                </div>
+                
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-blue-200 mb-2">INISIAL ANDA</label>
+                        <input type="text" id="loginInitial" maxlength="3" placeholder="CONTOH: ERW" 
+                               class="w-full px-5 py-4 bg-white/20 backdrop-blur border-2 border-white/30 rounded-2xl text-white placeholder-white/50 text-lg text-center font-bold focus:outline-none focus:border-white/50 transition-all"
+                               onkeyup="this.value = this.value.toUpperCase()" 
+                               onkeypress="handleKeyPress(event, 'login')"
+                               autofocus>
+                    </div>
+                    
+                    <button onclick="handleLogin()" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 text-lg font-bold rounded-2xl hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl flex items-center justify-center gap-2">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>LOGIN</span>
+                    </button>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-white/20">
+                    <div class="grid grid-cols-2 gap-3 text-xs text-blue-200">
+                        <div class="bg-white/5 backdrop-blur p-3 rounded-xl">
+                            <div class="font-bold text-white mb-1">ADMIN</div>
+                            <div>ERW</div>
+                        </div>
+                        <div class="bg-white/5 backdrop-blur p-3 rounded-xl">
+                            <div class="font-bold text-white mb-1">OPERATOR</div>
+                            <div>ABC, DEF, GHI, JKL, MNO</div>
+                        </div>
+                        <div class="bg-white/5 backdrop-blur p-3 rounded-xl">
+                            <div class="font-bold text-white mb-1">PACKER</div>
+                            <div>PQR, STU, VWX</div>
+                        </div>
+                        <div class="bg-white/5 backdrop-blur p-3 rounded-xl">
+                            <div class="font-bold text-white mb-1">ENGINEERING</div>
+                            <div>YZ1, YZ2 (VIEW)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="main-app" class="hidden flex-1 flex flex-col">
+        <!-- TOP NAVIGATION -->
+        <nav class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl shadow-lg border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center h-20">
+                    <div class="flex items-center">
+                        <div class="bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-xl mr-3">
+                            <i class="fas fa-chart-line text-white text-xl"></i>
+                        </div>
+                        <h1 class="text-2xl font-black gradient-text">TKL SYSTEM</h1>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg" id="roleBadge">
+                            ADMIN
+                        </div>
+
+                        <button onclick="toggleDarkMode()" class="p-3 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">
+                            <i id="darkModeIcon" class="fas fa-moon text-lg text-gray-700 dark:text-yellow-400"></i>
+                        </button>
+                        
+                        <div class="flex items-center gap-3 bg-gray-100 dark:bg-gray-700 rounded-xl px-4 py-2">
+                            <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-user text-white text-sm"></i>
+                            </div>
+                            <span class="font-bold text-sm hidden md:block" id="currentUser">ERW</span>
+                        </div>
+                        
+                        <button onclick="logout()" class="p-3 rounded-xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition-all">
+                            <i class="fas fa-sign-out-alt text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- NAVIGATION TABS -->
+                <div class="flex gap-2 pb-2 overflow-x-auto">
+                    <button onclick="showPage('dashboard')" class="nav-btn flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap" id="nav-dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span class="hidden sm:inline">DASHBOARD</span>
+                    </button>
+                    
+                    <button onclick="showPage('input-tkl')" class="nav-btn flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap hidden" id="nav-input">
+                        <i class="fas fa-pen"></i>
+                        <span class="hidden sm:inline">INPUT TKL</span>
+                    </button>
+                    
+                    <button onclick="showPage('management')" class="nav-btn flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap hidden" id="nav-management">
+                        <i class="fas fa-cog"></i>
+                        <span class="hidden sm:inline">MANAGEMENT</span>
+                    </button>
+                    
+                    <button onclick="showPage('audit-trail')" class="nav-btn flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap" id="nav-audit">
+                        <i class="fas fa-history"></i>
+                        <span class="hidden sm:inline">AUDIT TRAIL</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 container mx-auto px-4 py-8">
+            <!-- DASHBOARD PAGE -->
+            <div id="dashboard-page" class="page hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="dashboard-card bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border-l-4 border-blue-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">TOTAL OEE</p>
+                                <h3 class="text-3xl font-bold text-blue-600">85.5%</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-chart-pie text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border-l-4 border-green-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">AVAILABILITY</p>
+                                <h3 class="text-3xl font-bold text-green-600">92.3%</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-clock text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border-l-4 border-purple-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">PERFORMANCE</p>
+                                <h3 class="text-3xl font-bold text-purple-600">88.7%</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-gauge-high text-purple-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <i class="fas fa-chart-line text-blue-500"></i>
+                        OEE TREND (7 HARI TERAKHIR)
+                    </h3>
+                    <div class="h-64 bg-gradient-to-b from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-800 rounded-xl flex items-center justify-center">
+                        <p class="text-gray-400">DASHBOARD AKAN DISUSUN TERAKHIR</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INPUT TKL PAGE -->
+            <div id="input-tkl-page" class="page hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6">
+                    <!-- HEADER INFO -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 p-4 rounded-xl">
+                            <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">TANGGAL</label>
+                            <div class="font-bold text-lg" id="displayDate">31 AUG 2024</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-700 dark:to-gray-600 p-4 rounded-xl">
+                            <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">SHIFT</label>
+                            <div class="font-bold text-lg" id="displayShift">1 (07:00-15:30)</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-600 p-4 rounded-xl">
+                            <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">OPERATOR</label>
+                            <div class="font-bold text-lg" id="displayOperator">-</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 p-4 rounded-xl">
+                            <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">MESIN</label>
+                            <div class="font-bold text-lg" id="displayMachineName">-</div>
+                        </div>
+                    </div>
+
+                    <!-- MACHINE SELECTION -->
+                    <div class="mb-8">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">PILIH MESIN</label>
+                        <select id="machineSelect" class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-lg focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none transition-all bg-white dark:bg-gray-700" onchange="changeMachine()">
+                            <option value="">-- PILIH MESIN --</option>
+                        </select>
+                    </div>
+
+                    <!-- STATUS BAR -->
+                    <div class="flex items-center justify-between mb-8 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
+                        <div class="flex items-center gap-3">
+                            <span class="status-dot bg-gray-400" id="statusIndicator"></span>
+                            <span class="font-bold text-lg" id="currentStatus">PILIH MESIN</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-sm font-medium">
+                                <i class="fas fa-clock mr-1"></i> <span id="currentTime"></span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- ACTION BUTTONS -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <button id="btnRunning" onclick="handleRunning()" class="group relative bg-gradient-to-r from-green-500 to-emerald-600 text-white py-8 rounded-2xl text-xl font-bold flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden">
+                            <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                            <i class="fas fa-play text-4xl mb-2"></i>
+                            <span>MESIN RUNNING</span>
+                            <span class="text-sm opacity-90 mt-1">(KODE 2 - OTOMATIS)</span>
+                        </button>
+                        
+                        <button id="btnStop" onclick="handleStop()" class="group relative bg-gradient-to-r from-red-500 to-rose-600 text-white py-8 rounded-2xl text-xl font-bold flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden">
+                            <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                            <i class="fas fa-stop text-4xl mb-2"></i>
+                            <span>MESIN STOP</span>
+                            <span class="text-sm opacity-90 mt-1">(TAMBAH BARIS BARU)</span>
+                        </button>
+                    </div>
+
+                    <!-- PRODUK & BATCH SECTION -->
+                    <div id="productBatchSection" class="product-form p-6 rounded-xl mb-8 hidden">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                            <i class="fas fa-box"></i>
+                            INFORMASI PRODUKSI
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Kode Produk -->
+                            <div>
+                                <label class="block text-sm font-medium mb-2">KODE PRODUK</label>
+                                <select id="productCode" class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-lg focus:border-blue-500 focus:outline-none bg-white dark:bg-gray-700" onchange="updateTargetOutput()">
+                                    <option value="">-- PILIH PRODUK --</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Nomor Batch -->
+                            <div>
+                                <label class="block text-sm font-medium mb-2">NOMOR BATCH</label>
+                                <input type="text" id="batchNumber" class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-lg focus:border-blue-500 focus:outline-none bg-white dark:bg-gray-700" placeholder="CONTOH: BATCH01">
+                            </div>
+                        </div>
+
+                        <!-- Target Output Actual -->
+                        <div class="mt-6 target-badge p-6 rounded-xl text-white">
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <div class="text-sm opacity-90">TARGET OUTPUT (DARI MANAGEMENT)</div>
+                                    <div class="text-3xl font-bold" id="targetDisplay">0 PCS/MENIT</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm opacity-90">TARGET PER JAM</div>
+                                    <div class="text-2xl font-bold" id="targetPerHour">0 PCS</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MINOR STOPPAGE BUTTON -->
+                    <button id="btnMinor" onclick="openMinorForm()" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-4 rounded-xl text-lg font-bold mb-8 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>TAMBAH MINOR STOPPAGE</span>
+                    </button>
+
+                    <!-- MINOR STOPPAGE LIST -->
+                    <div id="minorStoppageContainer" class="mb-8 space-y-2"></div>
+
+                    <!-- TIMELINE SECTION -->
+                    <div class="mt-8">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-clock text-blue-500"></i>
+                            TIMELINE KEGIATAN
+                        </h3>
+                        
+                        <div id="timelineContainer" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
+                    </div>
+
+                    <!-- END SHIFT BUTTON -->
+                    <div class="mt-8 flex justify-end">
+                        <button onclick="endShift()" class="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-8 py-4 rounded-xl text-lg font-bold hover:from-gray-700 hover:to-gray-800 transition-all shadow-lg flex items-center gap-2">
+                            <i class="fas fa-flag-checkered"></i>
+                            AKHIRI SHIFT
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MANAGEMENT PAGE -->
+            <div id="management-page" class="page hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-cog text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold">MANAGEMENT</h2>
+                        <span class="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full text-sm font-medium">ADMIN ONLY</span>
+                    </div>
+                    
+                    <!-- Management Tabs -->
+                    <div class="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4 overflow-x-auto">
+                        <button onclick="showManagementTab('machines')" class="management-tab px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap bg-blue-500 text-white" id="tab-machines">
+                            <i class="fas fa-industry mr-2"></i>MESIN
+                        </button>
+                        <button onclick="showManagementTab('products')" class="management-tab px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap bg-gray-100 dark:bg-gray-700" id="tab-products">
+                            <i class="fas fa-box mr-2"></i>PRODUK
+                        </button>
+                        <button onclick="showManagementTab('initials')" class="management-tab px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap bg-gray-100 dark:bg-gray-700" id="tab-initials">
+                            <i class="fas fa-users mr-2"></i>INISIAL
+                        </button>
+                    </div>
+
+                    <!-- Machines Tab Content -->
+                    <div id="management-machines" class="management-content">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Add Machine Form -->
+                            <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fas fa-plus-circle text-blue-500"></i>
+                                    TAMBAH MESIN
+                                </h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">NAMA MESIN</label>
+                                        <input type="text" id="machineName" class="w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:outline-none bg-white dark:bg-gray-700" placeholder="CONTOH: JCMCO 16">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">AREA</label>
+                                        <select id="machineArea" class="w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:outline-none bg-white dark:bg-gray-700">
+                                            <option value="INJEKSI">INJEKSI</option>
+                                            <option value="NON INJEKSI">NON INJEKSI</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">TARGET OUTPUT (PCS/MENIT)</label>
+                                        <input type="number" id="machineTarget" min="0" value="0" class="w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:outline-none bg-white dark:bg-gray-700">
+                                    </div>
+                                    
+                                    <!-- TKL Section -->
+                                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                        <h4 class="font-bold mb-4">TKL & KEGIATAN</h4>
+                                        
+                                        <!-- Kode 1 - SETUP (WAJIB STANDARD) -->
+                                        <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <span class="kode-badge kode-1">KODE 1 - SETUP / PERSIAPAN</span>
+                                                <button onclick="addKegiatanField('1')" class="text-sm bg-green-500 text-white px-3 py-1 rounded-full hover:bg-green-600">
+                                                    <i class="fas fa-plus mr-1"></i>TAMBAH KEGIATAN
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mb-2">* WAJIB DURASI STANDARD</p>
+                                            <div id="kegiatan-container-1" class="space-y-2"></div>
+                                        </div>
+                                        
+                                        <!-- Kode 2 - RUNNING (TANPA TAMBAHAN) -->
+                                        <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <span class="kode-badge kode-2">KODE 2 - RUNNING</span>
+                                                <span class="text-xs text-gray-500 italic">(OTOMATIS)</span>
+                                            </div>
+                                            <div class="text-sm text-gray-600 dark:text-gray-400 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                                <i class="fas fa-info-circle mr-2"></i> KEGIATAN DEFAULT: RUNNING
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Kode 3 - LINE STOP (TANPA STANDARD) -->
+                                        <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <span class="kode-badge kode-3">KODE 3 - LINE STOP (MESIN MATI)</span>
+                                                <button onclick="addKegiatanField('3')" class="text-sm bg-green-500 text-white px-3 py-1 rounded-full hover:bg-green-600">
+                                                    <i class="fas fa-plus mr-1"></i>TAMBAH KEGIATAN
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mb-2">* TANPA STANDARD (HANYA LABEL)</p>
+                                            <div id="kegiatan-container-3" class="space-y-2"></div>
+                                        </div>
+                                        
+                                        <!-- Kode 5 - AM ACTIVITY (WAJIB STANDARD) -->
+                                        <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <span class="kode-badge kode-5">KODE 5 - AM ACTIVITY (5R, CLIT)</span>
+                                                <button onclick="addKegiatanField('5')" class="text-sm bg-green-500 text-white px-3 py-1 rounded-full hover:bg-green-600">
+                                                    <i class="fas fa-plus mr-1"></i>TAMBAH KEGIATAN
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mb-2">* WAJIB DURASI STANDARD</p>
+                                            <div id="kegiatan-container-5" class="space-y-2"></div>
+                                        </div>
+                                        
+                                        <!-- Kode 6 - PM (TANPA STANDARD) -->
+                                        <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <span class="kode-badge kode-6">KODE 6 - PM, CLOSE TAG</span>
+                                                <button onclick="addKegiatanField('6')" class="text-sm bg-green-500 text-white px-3 py-1 rounded-full hover:bg-green-600">
+                                                    <i class="fas fa-plus mr-1"></i>TAMBAH KEGIATAN
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mb-2">* TANPA STANDARD (HANYA LABEL)</p>
+                                            <div id="kegiatan-container-6" class="space-y-2"></div>
+                                        </div>
+                                        
+                                        <!-- Kode 7 - CLEANING (WAJIB STANDARD) -->
+                                        <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <span class="kode-badge kode-7">KODE 7 - CLEANING AKHIR</span>
+                                                <button onclick="addKegiatanField('7')" class="text-sm bg-green-500 text-white px-3 py-1 rounded-full hover:bg-green-600">
+                                                    <i class="fas fa-plus mr-1"></i>TAMBAH KEGIATAN
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mb-2">* WAJIB DURASI STANDARD</p>
+                                            <div id="kegiatan-container-7" class="space-y-2"></div>
+                                        </div>
+                                        
+                                        <!-- Kode 8 - ISTIRAHAT (WAJIB STANDARD) -->
+                                        <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <span class="kode-badge kode-8">KODE 8 - ISTIRAHAT / BRIEFING</span>
+                                                <button onclick="addKegiatanField('8')" class="text-sm bg-green-500 text-white px-3 py-1 rounded-full hover:bg-green-600">
+                                                    <i class="fas fa-plus mr-1"></i>TAMBAH KEGIATAN
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mb-2">* WAJIB DURASI STANDARD</p>
+                                            <div id="kegiatan-container-8" class="space-y-2"></div>
+                                        </div>
+                                        
+                                        <!-- Kode 9 - LINE STOP NON MESIN (TANPA STANDARD) -->
+                                        <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <span class="kode-badge kode-9">KODE 9 - LINE STOP NON MESIN</span>
+                                                <button onclick="addKegiatanField('9')" class="text-sm bg-green-500 text-white px-3 py-1 rounded-full hover:bg-green-600">
+                                                    <i class="fas fa-plus mr-1"></i>TAMBAH KEGIATAN
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mb-2">* TANPA STANDARD (HANYA LABEL)</p>
+                                            <div id="kegiatan-container-9" class="space-y-2"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button onclick="addMachine()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-xl font-bold hover:from-blue-600 hover:to-indigo-700 transition-all mt-4">
+                                        SIMPAN MESIN
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Machine List -->
+                            <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fas fa-list text-green-500"></i>
+                                    DAFTAR MESIN
+                                </h3>
+                                <div id="machineList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Products Tab Content -->
+                    <div id="management-products" class="management-content hidden">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Add Product Form -->
+                            <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fas fa-plus-circle text-green-500"></i>
+                                    TAMBAH PRODUK
+                                </h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">JENIS PRODUK</label>
+                                        <select id="productType" class="w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:outline-none bg-white dark:bg-gray-700">
+                                            <option value="ORAL">ORAL</option>
+                                            <option value="STERILE">STERILE</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">NAMA PRODUK</label>
+                                        <input type="text" id="productName" class="w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:outline-none bg-white dark:bg-gray-700" placeholder="CONTOH: PARACETAMOL">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">TARGET OUTPUT (PCS/MENIT)</label>
+                                        <input type="number" id="productTarget" min="0" class="w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:outline-none bg-white dark:bg-gray-700">
+                                    </div>
+                                    
+                                    <button onclick="addProduct()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 transition-all">
+                                        SIMPAN PRODUK
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Product List -->
+                            <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fas fa-list text-purple-500"></i>
+                                    DAFTAR PRODUK
+                                </h3>
+                                <div id="productList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Initials Tab Content -->
+                    <div id="management-initials" class="management-content hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Operator Initials -->
+                            <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fas fa-user text-blue-500"></i>
+                                    OPERATOR
+                                </h3>
+                                
+                                <div class="space-y-3 mb-4">
+                                    <div class="flex gap-2">
+                                        <input type="text" id="newOperatorInitial" maxlength="3" class="flex-1 p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl" placeholder="ABC">
+                                        <button onclick="addInitial('operator')" class="px-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div id="operatorInitialsList" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                            </div>
+                            
+                            <!-- Packer Initials -->
+                            <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fas fa-box text-green-500"></i>
+                                    PACKER
+                                </h3>
+                                
+                                <div class="space-y-3 mb-4">
+                                    <div class="flex gap-2">
+                                        <input type="text" id="newPackerInitial" maxlength="3" class="flex-1 p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl" placeholder="PQR">
+                                        <button onclick="addInitial('packer')" class="px-4 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div id="packerInitialsList" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                            </div>
+                            
+                            <!-- Engineering Initials -->
+                            <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fas fa-tools text-yellow-500"></i>
+                                    ENGINEERING
+                                </h3>
+                                
+                                <div class="space-y-3 mb-4">
+                                    <div class="flex gap-2">
+                                        <input type="text" id="newEngineeringInitial" maxlength="3" class="flex-1 p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl" placeholder="YZ1">
+                                        <button onclick="addInitial('engineering')" class="px-4 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 transition-all">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div id="engineeringInitialsList" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AUDIT TRAIL PAGE -->
+            <div id="audit-trail-page" class="page hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-history text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold">AUDIT TRAIL</h2>
+                    </div>
+                    
+                    <div id="auditContainer" class="space-y-3 max-h-96 overflow-y-auto"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- EDIT ACTIVITY MODAL -->
+<div id="editActivityModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div class="p-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-edit text-white text-xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold">EDIT KEGIATAN</h2>
+            </div>
+            
+            <div class="space-y-4">
+                <input type="hidden" id="editRowId">
+                <input type="hidden" id="editMachineIdForActivity">
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">JAM MULAI</label>
+                    <input type="time" id="editStartTime" class="w-full p-4 border-2 rounded-xl text-lg" readonly>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">JAM SELESAI</label>
+                    <input type="time" id="editEndTime" class="w-full p-4 border-2 rounded-xl text-lg" readonly>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">DURASI (MENIT)</label>
+                    <input type="number" id="editDuration" class="w-full p-4 border-2 rounded-xl text-lg bg-gray-100" readonly>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">KODE KEGIATAN</label>
+                    <select id="editKode" class="w-full p-4 border-2 rounded-xl text-lg" onchange="updateEditKegiatanDropdown()">
+                        <option value="">PILIH KODE</option>
+                        <option value="1">1 - SETUP / PERSIAPAN</option>
+                        <option value="2">2 - RUNNING</option>
+                        <option value="3">3 - LINE STOP (MESIN MATI)</option>
+                        <option value="5">5 - AM ACTIVITY (5R, CLIT)</option>
+                        <option value="6">6 - PM, CLOSE TAG</option>
+                        <option value="7">7 - CLEANING AKHIR</option>
+                        <option value="8">8 - ISTIRAHAT / BRIEFING</option>
+                        <option value="9">9 - LINE STOP NON MESIN</option>
+                    </select>
+                </div>
+
+                <div id="editKegiatanContainer"></div>
+
+                <div id="editStandardContainer" class="hidden">
+                    <label class="block text-sm font-medium mb-2">DURASI STANDARD (MENIT)</label>
+                    <input type="number" id="editDurasiStandard" class="w-full p-4 border-2 rounded-xl text-lg bg-gray-100" readonly>
+                    <div id="editOverWarning" class="text-sm text-red-600 mt-1 hidden">
+                        ⚠️ MELEBIHI STANDARD!
+                    </div>
+                </div>
+
+                <div id="editDynamicFields" class="space-y-4"></div>
+
+                <div class="grid grid-cols-2 gap-3 pt-4">
+                    <button onclick="saveEditActivity()" class="bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700">
+                        SIMPAN
+                    </button>
+                    <button onclick="closeEditModal()" class="bg-gray-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-gray-700">
+                        BATAL
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MINOR MODAL -->
+<div id="minorModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-lg shadow-2xl">
+        <div class="p-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold">MINOR STOPPAGE</h2>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">NAMA MASALAH</label>
+                    <select id="minorMasalah" class="w-full p-4 border-2 rounded-xl text-lg">
+                        <option value="">PILIH MASALAH</option>
+                        <option value="ETIKET PUTUS">ETIKET PUTUS</option>
+                        <option value="CODING KERING">CODING KERING</option>
+                        <option value="PAPER JAM">PAPER JAM</option>
+                        <option value="SENSOR ERROR">SENSOR ERROR</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">FREKUENSI</label>
+                    <input type="number" id="minorFrekuensi" min="1" value="1" class="w-full p-4 border-2 rounded-xl text-lg">
+                </div>
+                <div class="grid grid-cols-2 gap-3 pt-4">
+                    <button onclick="saveMinor()" class="bg-purple-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-purple-700">
+                        SIMPAN
+                    </button>
+                    <button onclick="closeMinorModal()" class="bg-gray-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-gray-700">
+                        BATAL
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KEGIATAN EDIT MODAL -->
+<div id="kegiatanEditModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-md shadow-2xl">
+        <div class="p-8">
+            <h3 class="text-xl font-bold mb-4">EDIT KEGIATAN</h3>
+            <div class="space-y-4">
+                <input type="hidden" id="editMachineId">
+                <input type="hidden" id="editKodeKegiatan">
+                <input type="hidden" id="editKegiatanIndex">
+                <div>
+                    <label class="block text-sm font-medium mb-2">NAMA KEGIATAN</label>
+                    <input type="text" id="editKegiatanNama" class="w-full p-3 border-2 rounded-xl">
+                </div>
+                <div id="editDurasiField">
+                    <label class="block text-sm font-medium mb-2">DURASI STANDARD (MENIT)</label>
+                    <input type="number" id="editKegiatanDurasi" class="w-full p-3 border-2 rounded-xl" min="0">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="saveKegiatanEdit()" class="flex-1 bg-green-600 text-white py-3 rounded-xl hover:bg-green-700">SIMPAN</button>
+                    <button onclick="closeKegiatanEditModal()" class="flex-1 bg-gray-600 text-white py-3 rounded-xl hover:bg-gray-700">BATAL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== GLOBAL VARIABLES ====================
+let currentUser = null;
+let currentRole = null;
+let currentMachine = null;
+let currentMachineObj = null;
+let currentShift = {
+    name: 'SHIFT 1 (07:00-15:30)',
+    start: '07:00',
+    end: '15:30',
+    duration: 510
+};
+let timeline = [];
+let minorStoppages = [];
+let activeActivity = null;
+let auditLogs = [];
+let shiftEnded = false;
+
+// Kode yang WAJIB punya standard
+const KODE_WITH_STANDARD = ['1', '5', '7', '8'];
+
+// Master data dengan kegiatan per kode
+let machines = [
+    { 
+        id: 'm1', 
+        name: 'JCMCO 16', 
+        area: 'NON INJEKSI', 
+        target: 200, 
+        tkls: {
+            '1': [
+                { id: 'k1a', nama: 'SETUP DIE', standard: 15 },
+                { id: 'k1b', nama: 'SETUP MATERIAL', standard: 10 },
+                { id: 'k1c', nama: 'SETUP TOOL', standard: 20 }
+            ],
+            '2': [
+                { id: 'k2a', nama: 'RUNNING', standard: 0 }
+            ],
+            '3': [
+                { id: 'k3a', nama: 'BELT PUTUS', standard: 0 },
+                { id: 'k3b', nama: 'MOTOR OVERHEAT', standard: 0 },
+                { id: 'k3c', nama: 'SENSOR ERROR', standard: 0 }
+            ],
+            '5': [
+                { id: 'k5a', nama: '5R ROUTINE', standard: 30 },
+                { id: 'k5b', nama: 'CLIT', standard: 45 }
+            ],
+            '6': [
+                { id: 'k6a', nama: 'PM ROUTINE', standard: 0 },
+                { id: 'k6b', nama: 'CLOSE YELLOW TAG', standard: 0 }
+            ],
+            '7': [
+                { id: 'k7a', nama: 'CLEAN MACHINE', standard: 30 },
+                { id: 'k7b', nama: 'CLEAN AREA', standard: 20 }
+            ],
+            '8': [
+                { id: 'k8a', nama: 'ISTIRAHAT PAGI', standard: 15 },
+                { id: 'k8b', nama: 'ISTIRAHAT SIANG', standard: 30 },
+                { id: 'k8c', nama: 'ISTIRAHAT SORE', standard: 15 },
+                { id: 'k8d', nama: 'BRIEFING', standard: 15 }
+            ],
+            '9': [
+                { id: 'k9a', nama: 'MATERIAL HABIS', standard: 0 },
+                { id: 'k9b', nama: 'OPERATOR ABSEN', standard: 0 }
+            ]
+        }
+    },
+    { 
+        id: 'm2', 
+        name: 'CVC', 
+        area: 'NON INJEKSI', 
+        target: 180, 
+        tkls: {
+            '1': [
+                { id: 'k1d', nama: 'SETUP DIE', standard: 20 },
+                { id: 'k1e', nama: 'SETUP MATERIAL', standard: 15 }
+            ],
+            '2': [
+                { id: 'k2b', nama: 'RUNNING', standard: 0 }
+            ],
+            '3': [
+                { id: 'k3d', nama: 'BELT PUTUS', standard: 0 },
+                { id: 'k3e', nama: 'SENSOR ERROR', standard: 0 }
+            ]
+        }
+    }
+];
+
+let products = [
+    { id: 'p1', type: 'ORAL', name: 'PARACETAMOL', target: 500 },
+    { id: 'p2', type: 'STERILE', name: 'INJECTION', target: 300 },
+    { id: 'p3', type: 'ORAL', name: 'ANTASIDA', target: 450 }
+];
+
+let operatorInitials = ['ABC', 'DEF', 'GHI', 'JKL', 'MNO'];
+let packerInitials = ['PQR', 'STU', 'VWX'];
+let engineeringInitials = ['YZ1', 'YZ2'];
+
+let kegiatanCounter = 0;
+
+// ==================== HANDLE ENTER KEY ====================
+function handleKeyPress(event, action) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        if (action === 'login') {
+            handleLogin();
+        }
+    }
+}
+
+// ==================== INITIAL RENDER ====================
+window.onload = function() {
+    addAuditLog('SYSTEM', 'APPLICATION STARTED');
+    updateCurrentTime();
+    renderMachineSelect();
+    renderMachineList();
+    renderProductList();
+    renderProductSelect();
+    renderInitialsLists();
+};
+
+function updateCurrentTime() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('currentTime').textContent = timeStr;
+}
+setInterval(updateCurrentTime, 1000);
+
+// ==================== LOGIN ====================
+function handleLogin() {
+    const initial = document.getElementById('loginInitial').value.trim().toUpperCase();
+    
+    if (!initial) {
+        alert('MASUKKAN INISIAL!');
+        return;
+    }
+    
+    if (initial === 'ERW') {
+        currentRole = 'ADMIN';
+        currentUser = initial;
+    } else if (operatorInitials.includes(initial)) {
+        currentRole = 'OPERATOR';
+        currentUser = initial;
+    } else if (packerInitials.includes(initial)) {
+        currentRole = 'PACKER';
+        currentUser = initial;
+    } else if (engineeringInitials.includes(initial)) {
+        currentRole = 'ENGINEERING';
+        currentUser = initial;
+    } else {
+        alert('INISIAL TIDAK TERDAFTAR!');
+        return;
+    }
+    
+    document.getElementById('login-page').classList.add('hidden');
+    document.getElementById('main-app').classList.remove('hidden');
+    
+    document.getElementById('currentUser').textContent = currentUser;
+    document.getElementById('roleBadge').textContent = currentRole;
+    document.getElementById('displayOperator').textContent = currentUser;
+    document.getElementById('displayDate').textContent = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase().replace(/\./g, '');
+    document.getElementById('displayShift').textContent = currentShift.name;
+    
+    const navInput = document.getElementById('nav-input');
+    const navManagement = document.getElementById('nav-management');
+    
+    if (currentRole === 'OPERATOR' || currentRole === 'PACKER') {
+        navInput.classList.remove('hidden');
+    } else {
+        navInput.classList.add('hidden');
+    }
+    
+    if (currentRole === 'ADMIN') {
+        navManagement.classList.remove('hidden');
+    } else {
+        navManagement.classList.add('hidden');
+    }
+    
+    document.getElementById('machineSelect').value = '';
+    currentMachine = null;
+    updateButtonsState();
+    
+    if (currentRole === 'OPERATOR' || currentRole === 'PACKER') {
+        showPage('input-tkl');
+    } else {
+        showPage('dashboard');
+    }
+    
+    addAuditLog('LOGIN', `${currentRole} ${currentUser} LOGIN`);
+}
+
+// ==================== LOGOUT ====================
+function logout() {
+    if (confirm('YAKIN LOGOUT?')) {
+        addAuditLog('LOGOUT', `${currentUser} LOGOUT`);
+        
+        currentUser = null;
+        currentRole = null;
+        currentMachine = null;
+        currentMachineObj = null;
+        timeline = [];
+        minorStoppages = [];
+        activeActivity = null;
+        shiftEnded = false;
+        
+        document.getElementById('main-app').classList.add('hidden');
+        document.getElementById('login-page').classList.remove('hidden');
+        document.getElementById('loginInitial').value = '';
+        
+        const machineSelect = document.getElementById('machineSelect');
+        if (machineSelect) machineSelect.value = '';
+        
+        document.getElementById('productBatchSection').classList.add('hidden');
+        
+        const timelineContainer = document.getElementById('timelineContainer');
+        if (timelineContainer) {
+            timelineContainer.innerHTML = '<div class="text-center text-gray-400 py-8"><i class="fas fa-arrow-up text-3xl mb-2"></i><p>PILIH MESIN TERLEBIH DAHULU</p></div>';
+        }
+        
+        renderMinorStoppages();
+    }
+}
+
+// ==================== PAGE NAVIGATION ====================
+function showPage(page) {
+    if (page === 'input-tkl' && currentRole !== 'OPERATOR' && currentRole !== 'PACKER') {
+        alert('HANYA OPERATOR DAN PACKER YANG BISA INPUT!');
+        return;
+    }
+    if (page === 'management' && currentRole !== 'ADMIN') {
+        alert('HANYA ADMIN YANG BISA AKSES!');
+        return;
+    }
+    
+    document.querySelectorAll('#main-app .page').forEach(p => p.classList.add('hidden'));
+    document.getElementById(page + '-page').classList.remove('hidden');
+    
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-blue-500', 'text-white'));
+    const activeNav = document.getElementById('nav-' + page.replace('-', ''));
+    if (activeNav) {
+        activeNav.classList.add('bg-blue-500', 'text-white');
+    }
+    
+    if (page === 'management') {
+        showManagementTab('machines');
+    }
+    
+    addAuditLog('NAVIGATION', `OPENED ${page.toUpperCase()} PAGE`);
+}
+
+// ==================== MANAGEMENT TABS ====================
+function showManagementTab(tab) {
+    document.querySelectorAll('.management-content').forEach(c => c.classList.add('hidden'));
+    document.getElementById(`management-${tab}`).classList.remove('hidden');
+    
+    document.querySelectorAll('.management-tab').forEach(t => {
+        t.classList.remove('bg-blue-500', 'text-white');
+        t.classList.add('bg-gray-100', 'dark:bg-gray-700');
+    });
+    document.getElementById(`tab-${tab}`).classList.add('bg-blue-500', 'text-white');
+    document.getElementById(`tab-${tab}`).classList.remove('bg-gray-100', 'dark:bg-gray-700');
+}
+
+// ==================== MACHINE MANAGEMENT ====================
+function renderMachineSelect() {
+    const select = document.getElementById('machineSelect');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">-- PILIH MESIN --</option>';
+    machines.forEach(m => {
+        select.innerHTML += `<option value="${m.id}">${m.name} (${m.area})</option>`;
+    });
+}
+
+function renderMachineList() {
+    const list = document.getElementById('machineList');
+    if (!list) return;
+    
+    list.innerHTML = '';
+    machines.forEach(machine => {
+        let tklHtml = '<div class="mt-3 space-y-3">';
+        
+        // Render setiap kode yang ada
+        const kodeList = ['1', '2', '3', '5', '6', '7', '8', '9'];
+        kodeList.forEach(kode => {
+            if (machine.tkls[kode] && machine.tkls[kode].length > 0) {
+                let kegiatanHtml = '';
+                machine.tkls[kode].forEach((keg, idx) => {
+                    kegiatanHtml += `
+                        <div class="flex items-center justify-between text-sm bg-white dark:bg-gray-800 p-2 rounded-lg">
+                            <div>
+                                <span class="font-medium">${keg.nama}</span>
+                                ${keg.standard > 0 ? `<span class="ml-2 text-xs text-gray-500">${keg.standard} MENIT</span>` : ''}
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="editKegiatan('${machine.id}', '${kode}', ${idx})" class="text-blue-500 hover:text-blue-700">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteKegiatan('${machine.id}', '${kode}', ${idx})" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                tklHtml += `
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="kode-badge kode-${kode}">KODE ${kode}</span>
+                        </div>
+                        <div class="space-y-2">
+                            ${kegiatanHtml}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        tklHtml += '</div>';
+        
+        list.innerHTML += `
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="font-bold text-lg">${machine.name}</div>
+                        <div class="text-sm text-gray-500">${machine.area} | TARGET: ${machine.target} PCS/MENIT</div>
+                        ${tklHtml}
+                    </div>
+                    <button onclick="deleteMachine('${machine.id}')" class="text-red-500 hover:text-red-700 ml-2">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function addKegiatanField(kode) {
+    // KODE 2 tidak boleh tambah kegiatan
+    if (kode === '2') {
+        alert('KODE 2 (RUNNING) TIDAK MEMERLUKAN KEGIATAN TAMBAHAN!');
+        return;
+    }
+    
+    kegiatanCounter++;
+    const container = document.getElementById(`kegiatan-container-${kode}`);
+    if (!container) return;
+    
+    const div = document.createElement('div');
+    div.className = 'flex gap-2 items-center mb-2';
+    div.id = `kegiatan-${kode}-${kegiatanCounter}`;
+    
+    const hasStandard = KODE_WITH_STANDARD.includes(kode);
+    
+    div.innerHTML = `
+        <input type="text" class="kegiatan-nama flex-1 p-2 border rounded-lg" placeholder="NAMA KEGIATAN">
+        ${hasStandard ? '<input type="number" class="kegiatan-durasi w-24 p-2 border rounded-lg" placeholder="MENIT" min="0">' : '<input type="hidden" class="kegiatan-durasi" value="0">'}
+        <button type="button" onclick="removeKegiatanField('kegiatan-${kode}-${kegiatanCounter}')" class="text-red-500 hover:text-red-700">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.appendChild(div);
+}
+
+function removeKegiatanField(id) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.remove();
+    }
+}
+
+function addMachine() {
+    const name = document.getElementById('machineName').value.trim().toUpperCase();
+    const area = document.getElementById('machineArea').value;
+    const target = document.getElementById('machineTarget').value;
+    
+    if (!name) {
+        alert('NAMA MESIN HARUS DIISI!');
+        return;
+    }
+    
+    const tkls = {};
+    const kodeList = ['1', '2', '3', '5', '6', '7', '8', '9'];
+    
+    try {
+        kodeList.forEach(kode => {
+            const kegiatanList = [];
+            const container = document.getElementById(`kegiatan-container-${kode}`);
+            if (container) {
+                const items = container.querySelectorAll('.flex');
+                items.forEach(item => {
+                    const namaInput = item.querySelector('.kegiatan-nama');
+                    if (!namaInput) return;
+                    
+                    const nama = namaInput.value.trim().toUpperCase();
+                    if (nama) {
+                        const durasiInput = item.querySelector('.kegiatan-durasi');
+                        const durasi = durasiInput ? parseInt(durasiInput.value) || 0 : 0;
+                        
+                        // Validasi: kode dengan standard wajib punya durasi > 0
+                        if (KODE_WITH_STANDARD.includes(kode) && durasi <= 0) {
+                            throw new Error(`KODE ${kode} WAJIB MEMILIKI DURASI STANDARD > 0!`);
+                        }
+                        
+                        kegiatanList.push({
+                            id: `k${kode}-${Date.now()}-${Math.random()}`,
+                            nama: nama,
+                            standard: durasi
+                        });
+                    }
+                });
+            }
+            if (kegiatanList.length > 0) {
+                tkls[kode] = kegiatanList;
+            }
+        });
+        
+        // Pastikan KODE 2 selalu ada
+        if (!tkls['2']) {
+            tkls['2'] = [{
+                id: 'k2-default-' + Date.now(),
+                nama: 'RUNNING',
+                standard: 0
+            }];
+        }
+        
+        const newMachine = {
+            id: 'm' + Date.now(),
+            name: name,
+            area: area,
+            target: target || 0,
+            tkls: tkls
+        };
+        
+        machines.push(newMachine);
+        renderMachineSelect();
+        renderMachineList();
+        
+        document.getElementById('machineName').value = '';
+        document.getElementById('machineTarget').value = '0';
+        
+        kodeList.forEach(kode => {
+            const container = document.getElementById(`kegiatan-container-${kode}`);
+            if (container) container.innerHTML = '';
+        });
+        
+        addAuditLog('MANAGEMENT', `TAMBAH MESIN: ${name}`);
+        alert('MESIN BERHASIL DITAMBAHKAN!');
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+function deleteMachine(id) {
+    if (confirm('YAKIN HAPUS MESIN INI?')) {
+        machines = machines.filter(m => m.id !== id);
+        renderMachineSelect();
+        renderMachineList();
+        addAuditLog('MANAGEMENT', `HAPUS MESIN`);
+    }
+}
+
+function editKegiatan(machineId, kode, index) {
+    const machine = machines.find(m => m.id === machineId);
+    if (!machine || !machine.tkls[kode]) return;
+    
+    const kegiatan = machine.tkls[kode][index];
+    document.getElementById('editMachineId').value = machineId;
+    document.getElementById('editKodeKegiatan').value = kode;
+    document.getElementById('editKegiatanIndex').value = index;
+    document.getElementById('editKegiatanNama').value = kegiatan.nama;
+    
+    const durasiField = document.getElementById('editDurasiField');
+    if (KODE_WITH_STANDARD.includes(kode)) {
+        durasiField.classList.remove('hidden');
+        document.getElementById('editKegiatanDurasi').value = kegiatan.standard;
+    } else {
+        durasiField.classList.add('hidden');
+    }
+    
+    document.getElementById('kegiatanEditModal').classList.remove('hidden');
+    document.getElementById('kegiatanEditModal').classList.add('flex');
+}
+
+function saveKegiatanEdit() {
+    const machineId = document.getElementById('editMachineId').value;
+    const kode = document.getElementById('editKodeKegiatan').value;
+    const index = parseInt(document.getElementById('editKegiatanIndex').value);
+    const newNama = document.getElementById('editKegiatanNama').value.trim().toUpperCase();
+    
+    if (!newNama) {
+        alert('NAMA KEGIATAN HARUS DIISI!');
+        return;
+    }
+    
+    const machine = machines.find(m => m.id === machineId);
+    if (machine && machine.tkls[kode] && machine.tkls[kode][index]) {
+        machine.tkls[kode][index].nama = newNama;
+        
+        if (KODE_WITH_STANDARD.includes(kode)) {
+            const newDurasi = parseInt(document.getElementById('editKegiatanDurasi').value) || 0;
+            if (newDurasi <= 0) {
+                alert(`KODE ${kode} WAJIB MEMILIKI DURASI STANDARD > 0!`);
+                return;
+            }
+            machine.tkls[kode][index].standard = newDurasi;
+        }
+        
+        renderMachineList();
+        closeKegiatanEditModal();
+        addAuditLog('MANAGEMENT', `EDIT KEGIATAN: ${newNama}`);
+    }
+}
+
+function closeKegiatanEditModal() {
+    document.getElementById('kegiatanEditModal').classList.add('hidden');
+    document.getElementById('kegiatanEditModal').classList.remove('flex');
+}
+
+function deleteKegiatan(machineId, kode, index) {
+    if (confirm('YAKIN HAPUS KEGIATAN INI?')) {
+        const machine = machines.find(m => m.id === machineId);
+        if (machine && machine.tkls[kode]) {
+            machine.tkls[kode].splice(index, 1);
+            renderMachineList();
+            addAuditLog('MANAGEMENT', `HAPUS KEGIATAN`);
+        }
+    }
+}
+
+// ==================== PRODUCT MANAGEMENT ====================
+function renderProductList() {
+    const list = document.getElementById('productList');
+    if (!list) return;
+    
+    list.innerHTML = '';
+    products.forEach(product => {
+        list.innerHTML += `
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="font-bold">${product.name}</div>
+                        <div class="text-sm text-gray-500">${product.type} | TARGET: ${product.target} PCS/MENIT</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="editProduct('${product.id}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteProduct('${product.id}')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function renderProductSelect() {
+    const select = document.getElementById('productCode');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">-- PILIH PRODUK --</option>';
+    products.forEach(p => {
+        select.innerHTML += `<option value="${p.id}" data-target="${p.target}">${p.name} (${p.type})</option>`;
+    });
+}
+
+function addProduct() {
+    const type = document.getElementById('productType').value;
+    const name = document.getElementById('productName').value.trim().toUpperCase();
+    const target = document.getElementById('productTarget').value;
+    
+    if (!name || !target) {
+        alert('ISI SEMUA FIELD!');
+        return;
+    }
+    
+    const newProduct = {
+        id: 'p' + Date.now(),
+        type: type,
+        name: name,
+        target: target
+    };
+    
+    products.push(newProduct);
+    renderProductList();
+    renderProductSelect();
+    
+    document.getElementById('productName').value = '';
+    document.getElementById('productTarget').value = '';
+    
+    addAuditLog('MANAGEMENT', `TAMBAH PRODUK: ${name}`);
+    alert('PRODUK BERHASIL DITAMBAHKAN!');
+}
+
+function editProduct(id) {
+    const product = products.find(p => p.id === id);
+    if (!product) return;
+    
+    const newName = prompt('EDIT NAMA PRODUK:', product.name);
+    if (newName) {
+        product.name = newName.toUpperCase();
+        renderProductList();
+        renderProductSelect();
+        addAuditLog('MANAGEMENT', `EDIT PRODUK: ${product.name}`);
+    }
+}
+
+function deleteProduct(id) {
+    if (confirm('YAKIN HAPUS PRODUK INI?')) {
+        products = products.filter(p => p.id !== id);
+        renderProductList();
+        renderProductSelect();
+        addAuditLog('MANAGEMENT', `HAPUS PRODUK`);
+    }
+}
+
+// ==================== TARGET OUTPUT ====================
+function updateTargetOutput() {
+    const productSelect = document.getElementById('productCode');
+    if (!productSelect) return;
+    
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    const targetPerMinute = selectedOption ? selectedOption.getAttribute('data-target') || 0 : 0;
+    
+    document.getElementById('targetDisplay').textContent = targetPerMinute + ' PCS/MENIT';
+    
+    const targetPerHour = targetPerMinute * 60;
+    document.getElementById('targetPerHour').textContent = targetPerHour.toLocaleString() + ' PCS';
+}
+
+// ==================== INITIALS MANAGEMENT ====================
+function renderInitialsLists() {
+    const opList = document.getElementById('operatorInitialsList');
+    const packList = document.getElementById('packerInitialsList');
+    const engList = document.getElementById('engineeringInitialsList');
+    
+    if (opList) {
+        opList.innerHTML = '';
+        operatorInitials.forEach(init => {
+            opList.innerHTML += `
+                <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-2 rounded-lg">
+                    <span class="font-bold">${init}</span>
+                    <button onclick="deleteInitial('operator', '${init}')" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+        });
+    }
+    
+    if (packList) {
+        packList.innerHTML = '';
+        packerInitials.forEach(init => {
+            packList.innerHTML += `
+                <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-2 rounded-lg">
+                    <span class="font-bold">${init}</span>
+                    <button onclick="deleteInitial('packer', '${init}')" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+        });
+    }
+    
+    if (engList) {
+        engList.innerHTML = '';
+        engineeringInitials.forEach(init => {
+            engList.innerHTML += `
+                <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-2 rounded-lg">
+                    <span class="font-bold">${init}</span>
+                    <button onclick="deleteInitial('engineering', '${init}')" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+        });
+    }
+}
+
+function addInitial(type) {
+    let inputId, targetArray;
+    
+    if (type === 'operator') {
+        inputId = 'newOperatorInitial';
+        targetArray = operatorInitials;
+    } else if (type === 'packer') {
+        inputId = 'newPackerInitial';
+        targetArray = packerInitials;
+    } else {
+        inputId = 'newEngineeringInitial';
+        targetArray = engineeringInitials;
+    }
+    
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    const value = input.value.trim().toUpperCase();
+    if (!value) {
+        alert('MASUKKAN INISIAL!');
+        return;
+    }
+    
+    if (targetArray.includes(value)) {
+        alert('INISIAL SUDAH ADA!');
+        return;
+    }
+    
+    targetArray.push(value);
+    renderInitialsLists();
+    input.value = '';
+    addAuditLog('MANAGEMENT', `TAMBAH ${type.toUpperCase()}: ${value}`);
+}
+
+function deleteInitial(type, value) {
+    if (confirm(`YAKIN HAPUS ${value}?`)) {
+        if (type === 'operator') {
+            operatorInitials = operatorInitials.filter(i => i !== value);
+        } else if (type === 'packer') {
+            packerInitials = packerInitials.filter(i => i !== value);
+        } else {
+            engineeringInitials = engineeringInitials.filter(i => i !== value);
+        }
+        renderInitialsLists();
+        addAuditLog('MANAGEMENT', `HAPUS ${type.toUpperCase()}: ${value}`);
+    }
+}
+
+// ==================== MACHINE SELECTION ====================
+function changeMachine() {
+    const select = document.getElementById('machineSelect');
+    if (!select) return;
+    
+    const selectedId = select.value;
+    currentMachineObj = machines.find(m => m.id === selectedId);
+    currentMachine = currentMachineObj ? currentMachineObj.name : null;
+    
+    if (currentMachine) {
+        document.getElementById('displayMachineName').textContent = currentMachine;
+        document.getElementById('productBatchSection').classList.remove('hidden');
+        
+        timeline = [];
+        minorStoppages = [];
+        activeActivity = null;
+        shiftEnded = false;
+        
+        updateButtonsState();
+        
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        
+        // Buat baris awal dari jam 07:00 sampai sekarang
+        const initialRow = {
+            id: 'row-' + Date.now(),
+            startTime: '07:00',
+            endTime: getCurrentTime(),
+            kode: null,
+            kegiatanId: null,
+            kegiatanNama: null,
+            durasiStandard: 0,
+            durasiAktual: null,
+            activity: null,
+            details: {},
+            isActive: false,
+            overStandard: false
+        };
+        timeline.push(initialRow);
+        
+        // Buat baris aktif untuk kegiatan sekarang
+        const activeRow = {
+            id: 'row-' + Date.now() + 1,
+            startTime: getCurrentTime(),
+            endTime: null,
+            kode: null,
+            kegiatanId: null,
+            kegiatanNama: null,
+            durasiStandard: 0,
+            durasiAktual: null,
+            activity: null,
+            details: {},
+            isActive: true,
+            overStandard: false
+        };
+        timeline.push(activeRow);
+        activeActivity = activeRow;
+        
+        renderTimeline();
+        renderMinorStoppages();
+        addAuditLog('MACHINE', `PILIH MESIN ${currentMachine}`);
+    } else {
+        document.getElementById('displayMachineName').textContent = '-';
+        document.getElementById('productBatchSection').classList.add('hidden');
+        updateButtonsState();
+        document.getElementById('timelineContainer').innerHTML = '<div class="text-center text-gray-400 py-8"><i class="fas fa-arrow-up text-3xl mb-2"></i><p>PILIH MESIN TERLEBIH DAHULU</p></div>';
+        renderMinorStoppages();
+    }
+}
+
+function updateButtonsState() {
+    const btnRunning = document.getElementById('btnRunning');
+    const btnStop = document.getElementById('btnStop');
+    const btnMinor = document.getElementById('btnMinor');
+    
+    if (currentMachine && !shiftEnded) {
+        const isRunning = activeActivity && activeActivity.kode === '2';
+        
+        btnRunning.disabled = isRunning;
+        btnStop.disabled = false;
+        btnMinor.disabled = false;
+        
+        if (isRunning) {
+            btnRunning.classList.add('opacity-50');
+            document.getElementById('currentStatus').textContent = 'RUNNING';
+            document.getElementById('statusIndicator').className = 'status-dot pulse bg-green-500';
+        } else {
+            btnRunning.classList.remove('opacity-50');
+            document.getElementById('currentStatus').textContent = 'SIAP';
+            document.getElementById('statusIndicator').className = 'status-dot pulse bg-blue-500';
+        }
+        
+        btnStop.classList.remove('opacity-50');
+        btnMinor.classList.remove('opacity-50');
+    } else {
+        btnRunning.disabled = true;
+        btnStop.disabled = true;
+        btnMinor.disabled = true;
+        btnRunning.classList.add('opacity-50');
+        btnStop.classList.add('opacity-50');
+        btnMinor.classList.add('opacity-50');
+        
+        document.getElementById('currentStatus').textContent = currentMachine ? 'SHIFT SELESAI' : 'PILIH MESIN';
+        document.getElementById('statusIndicator').className = 'status-dot bg-gray-400';
+    }
+}
+
+// ==================== MINOR STOPPAGE ====================
+function renderMinorStoppages() {
+    const container = document.getElementById('minorStoppageContainer');
+    if (!container) return;
+    
+    if (minorStoppages.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '<div class="text-sm font-medium text-amber-600 dark:text-amber-400 mb-2">MINOR STOPPAGE</div>';
+    
+    minorStoppages.forEach((minor, index) => {
+        html += `
+            <div class="minor-item p-4 rounded-xl shadow-sm flex justify-between items-center">
+                <div>
+                    <span class="font-bold">${minor.masalah}</span>
+                    <span class="ml-3 px-2 py-1 bg-white/50 dark:bg-gray-800/50 rounded-full text-xs">${minor.frekuensi} KEJADIAN</span>
+                </div>
+                <button onclick="deleteMinor(${index})" class="text-red-600 hover:text-red-800">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function deleteMinor(index) {
+    if (confirm('YAKIN HAPUS MINOR STOPPAGE INI?')) {
+        const deleted = minorStoppages[index];
+        minorStoppages.splice(index, 1);
+        renderMinorStoppages();
+        addAuditLog('MINOR', `HAPUS ${deleted.masalah} (${deleted.frekuensi}X)`);
+    }
+}
+
+// ==================== TIMELINE ====================
+function renderTimeline() {
+    const container = document.getElementById('timelineContainer');
+    if (!container) return;
+    
+    if (timeline.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-400 py-8"><i class="fas fa-arrow-up text-3xl mb-2"></i><p>TEKAN TOMBOL RUNNING ATAU STOP</p></div>';
+        return;
+    }
+    
+    let html = '';
+    
+    timeline.forEach(row => {
+        const isActive = row.isActive ? 'border-2 border-blue-500 shadow-lg' : '';
+        const overStandard = row.overStandard ? 'over-standard' : '';
+        const durasi = row.endTime ? calculateDuration(row.startTime, row.endTime) : null;
+        
+        html += `
+            <div class="timeline-row ${overStandard} p-4 rounded-xl shadow-sm ${isActive}" onclick="openEditModal('${row.id}')">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="flex items-center flex-wrap gap-2 mb-1">
+                            <span class="font-bold text-lg">${row.startTime} - ${row.endTime || '<span class="text-blue-500">SEKARANG</span>'}</span>
+                            ${row.kode ? `<span class="kode-badge kode-${row.kode}">KODE ${row.kode}</span>` : '<span class="text-xs text-red-500">(BELUM DIISI)</span>'}
+                            ${row.isActive ? '<span class="px-2 py-1 bg-blue-500 text-white rounded-full text-xs font-medium animate-pulse">AKTIF</span>' : ''}
+                        </div>
+                        ${row.kegiatanNama ? `<div class="text-sm font-medium">${row.kegiatanNama}</div>` : ''}
+                        ${row.activity ? `<div class="text-sm text-gray-600">${row.activity}</div>` : ''}
+                        <div class="text-xs text-gray-500 space-x-2 mt-1">
+                            ${row.durasiStandard > 0 ? `<span>STANDARD: ${row.durasiStandard} MENIT</span>` : ''}
+                            ${durasi ? `<span>AKTUAL: ${durasi} MENIT</span>` : ''}
+                            ${row.overStandard ? '<span class="text-red-600 font-bold">⚠️ OVER STANDARD</span>' : ''}
+                            ${renderRowDetails(row)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function renderRowDetails(row) {
+    let details = '';
+    if (row.details) {
+        if (row.details.batch) details += `<span class="inline-block mr-3"><i class="fas fa-box mr-1"></i>BATCH: ${row.details.batch}</span>`;
+        if (row.details.wr) details += `<span class="inline-block mr-3"><i class="fas fa-ticket mr-1"></i>WR: ${row.details.wr}</span>`;
+        if (row.details.masalah) details += `<span class="inline-block mr-3"><i class="fas fa-exclamation-circle mr-1"></i>${row.details.masalah}</span>`;
+    }
+    return details;
+}
+
+// ==================== KEGIATAN DROPDOWN HELPERS ====================
+function getKegiatanOptions(kode) {
+    if (!currentMachineObj || !currentMachineObj.tkls || !currentMachineObj.tkls[kode]) {
+        return '<option value="">TIDAK ADA KEGIATAN</option>';
+    }
+    
+    let options = '<option value="">PILIH KEGIATAN</option>';
+    currentMachineObj.tkls[kode].forEach(keg => {
+        const standardText = keg.standard > 0 ? ` (${keg.standard} MENIT)` : '';
+        options += `<option value="${keg.id}" data-nama="${keg.nama}" data-standard="${keg.standard}">${keg.nama}${standardText}</option>`;
+    });
+    return options;
+}
+
+// ==================== EDIT ACTIVITY ====================
+function openEditModal(rowId) {
+    const row = timeline.find(r => r.id === rowId);
+    if (!row) return;
+    
+    // Hitung durasi otomatis
+    const endTime = row.endTime || getCurrentTime();
+    const duration = calculateDuration(row.startTime, endTime);
+    
+    // Set nilai dengan pengecekan null
+    const editRowId = document.getElementById('editRowId');
+    const editMachineIdForActivity = document.getElementById('editMachineIdForActivity');
+    const editStartTime = document.getElementById('editStartTime');
+    const editEndTime = document.getElementById('editEndTime');
+    const editDuration = document.getElementById('editDuration');
+    const editKode = document.getElementById('editKode');
+    
+    if (editRowId) editRowId.value = row.id;
+    if (editMachineIdForActivity) editMachineIdForActivity.value = currentMachineObj ? currentMachineObj.id : '';
+    if (editStartTime) editStartTime.value = row.startTime;
+    if (editEndTime) editEndTime.value = row.endTime || getCurrentTime();
+    if (editDuration) editDuration.value = duration;
+    if (editKode) editKode.value = row.kode || '';
+    
+    // Update dropdown kegiatan
+    updateEditKegiatanDropdown();
+    
+    // Set kegiatan yang sudah dipilih sebelumnya
+    if (row.kegiatanId) {
+        setTimeout(() => {
+            const kegiatanSelect = document.getElementById('editKegiatan');
+            if (kegiatanSelect) {
+                kegiatanSelect.value = row.kegiatanId;
+                updateEditDurasiStandard();
+            }
+        }, 200);
+    }
+    
+    // Tampilkan field tambahan sesuai kode
+    updateEditFormFields(row.kode, row.details);
+    
+    const modal = document.getElementById('editActivityModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+function updateEditKegiatanDropdown() {
+    const kodeSelect = document.getElementById('editKode');
+    const container = document.getElementById('editKegiatanContainer');
+    const standardContainer = document.getElementById('editStandardContainer');
+    
+    if (!kodeSelect || !container || !standardContainer) return;
+    
+    const kode = kodeSelect.value;
+    
+    if (!kode) {
+        container.innerHTML = '';
+        standardContainer.classList.add('hidden');
+        return;
+    }
+    
+    // KODE 2 tidak perlu dropdown
+    if (kode === '2') {
+        container.innerHTML = `
+            <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl mb-4">
+                <p class="font-medium">KEGIATAN: RUNNING</p>
+            </div>
+        `;
+        standardContainer.classList.add('hidden');
+        return;
+    }
+    
+    if (!currentMachineObj || !currentMachineObj.tkls || !currentMachineObj.tkls[kode]) {
+        container.innerHTML = '<p class="text-red-500">TIDAK ADA KEGIATAN UNTUK KODE INI</p>';
+        standardContainer.classList.add('hidden');
+        return;
+    }
+    
+    let options = '<option value="">PILIH KEGIATAN</option>';
+    currentMachineObj.tkls[kode].forEach(keg => {
+        const standardText = keg.standard > 0 ? ` (${keg.standard} MENIT)` : '';
+        options += `<option value="${keg.id}" data-nama="${keg.nama}" data-standard="${keg.standard}">${keg.nama}${standardText}</option>`;
+    });
+    
+    container.innerHTML = `
+        <label class="block text-sm font-medium mb-2">PILIH KEGIATAN</label>
+        <select id="editKegiatan" class="w-full p-4 border-2 rounded-xl text-lg" onchange="updateEditDurasiStandard()">
+            ${options}
+        </select>
+    `;
+    
+    // Tampilkan standard container hanya untuk kode yang punya standard
+    if (KODE_WITH_STANDARD.includes(kode)) {
+        standardContainer.classList.remove('hidden');
+    } else {
+        standardContainer.classList.add('hidden');
+    }
+}
+
+function updateEditDurasiStandard() {
+    const kodeSelect = document.getElementById('editKode');
+    const kegiatanSelect = document.getElementById('editKegiatan');
+    const durasiStandardInput = document.getElementById('editDurasiStandard');
+    const durasiInput = document.getElementById('editDuration');
+    const warningDiv = document.getElementById('editOverWarning');
+    
+    if (!kodeSelect || !kegiatanSelect || !durasiStandardInput || !durasiInput || !warningDiv) return;
+    
+    const kode = kodeSelect.value;
+    if (kode === '2' || !KODE_WITH_STANDARD.includes(kode)) return;
+    
+    const selectedOption = kegiatanSelect.options[kegiatanSelect.selectedIndex];
+    const standard = selectedOption ? parseInt(selectedOption.getAttribute('data-standard')) || 0 : 0;
+    
+    durasiStandardInput.value = standard;
+    
+    // Cek over standard
+    const durasi = parseInt(durasiInput.value) || 0;
+    
+    if (durasi > standard && standard > 0) {
+        warningDiv.classList.remove('hidden');
+    } else {
+        warningDiv.classList.add('hidden');
+    }
+}
+
+function updateEditFormFields(kode, details = {}) {
+    const container = document.getElementById('editDynamicFields');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (kode === '3') {
+        container.innerHTML = `
+            <div>
+                <label class="block text-sm font-medium mb-2">MASALAH / PENYEBAB</label>
+                <input type="text" id="editMasalah" class="w-full p-4 border-2 rounded-xl" value="${details.masalah || ''}" placeholder="CONTOH: BELT PUTUS">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">NO. WR</label>
+                <input type="text" id="editWR" class="w-full p-4 border-2 rounded-xl" value="${details.wr || ''}" placeholder="CONTOH: WR-12234">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">TINDAKAN</label>
+                <input type="text" id="editTindakan" class="w-full p-4 border-2 rounded-xl" value="${details.tindakan || ''}" placeholder="CONTOH: PANGGIL TEKNISI">
+            </div>
+        `;
+    } else if (kode === '1' || kode === '7') {
+        container.innerHTML = `
+            <div>
+                <label class="block text-sm font-medium mb-2">BATCH NUMBER</label>
+                <input type="text" id="editBatch" class="w-full p-4 border-2 rounded-xl" value="${details.batch || ''}" placeholder="CONTOH: BATCH01">
+            </div>
+        `;
+    }
+}
+
+function saveEditActivity() {
+    const editRowId = document.getElementById('editRowId');
+    if (!editRowId) return;
+    
+    const rowId = editRowId.value;
+    const row = timeline.find(r => r.id === rowId);
+    if (!row) return;
+    
+    const kodeSelect = document.getElementById('editKode');
+    if (!kodeSelect) return;
+    
+    const newKode = kodeSelect.value;
+    
+    if (!newKode) {
+        alert('PILIH KODE KEGIATAN!');
+        return;
+    }
+    
+    // Untuk KODE 2, tidak perlu kegiatan
+    if (newKode === '2') {
+        row.kode = '2';
+        row.kegiatanId = 'k2-default';
+        row.kegiatanNama = 'RUNNING';
+        row.durasiStandard = 0;
+        row.overStandard = false;
+        row.details = {};
+    } else {
+        const kegiatanSelect = document.getElementById('editKegiatan');
+        if (!kegiatanSelect || !kegiatanSelect.value) {
+            alert('PILIH KEGIATAN!');
+            return;
+        }
+        
+        const selectedOption = kegiatanSelect.options[kegiatanSelect.selectedIndex];
+        const durasiStandard = parseInt(selectedOption.getAttribute('data-standard')) || 0;
+        const durasiAktual = parseInt(document.getElementById('editDuration')?.value) || 0;
+        
+        row.kode = newKode;
+        row.kegiatanId = kegiatanSelect.value;
+        row.kegiatanNama = selectedOption.getAttribute('data-nama');
+        row.durasiStandard = durasiStandard;
+        row.overStandard = (durasiAktual > durasiStandard && durasiStandard > 0);
+    }
+    
+    // Update details
+    if (newKode === '3') {
+        row.details = {
+            masalah: document.getElementById('editMasalah')?.value || '',
+            wr: document.getElementById('editWR')?.value || '',
+            tindakan: document.getElementById('editTindakan')?.value || ''
+        };
+    } else if (newKode === '1' || newKode === '7') {
+        row.details = {
+            batch: document.getElementById('editBatch')?.value || ''
+        };
+    } else {
+        row.details = {};
+    }
+    
+    renderTimeline();
+    closeEditModal();
+    addAuditLog('ACTIVITY', `EDIT KEGIATAN: ${newKode} - ${row.kegiatanNama || ''}`);
+}
+
+function closeEditModal() {
+    const modal = document.getElementById('editActivityModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+// ==================== ACTIVITY ====================
+function handleRunning() {
+    if (!currentMachine || shiftEnded) return;
+    
+    if (activeActivity && activeActivity.kode === '2') {
+        alert('MESIN SEDANG RUNNING!');
+        return;
+    }
+    
+    // Stop aktivitas sebelumnya
+    if (activeActivity) {
+        activeActivity.isActive = false;
+        activeActivity.endTime = getCurrentTime();
+    }
+    
+    // Buat aktivitas running baru
+    const newActivity = {
+        id: 'row-' + Date.now(),
+        startTime: getCurrentTime(),
+        endTime: null,
+        kode: '2',
+        kegiatanId: 'k2-default',
+        kegiatanNama: 'RUNNING',
+        durasiStandard: 0,
+        durasiAktual: null,
+        activity: 'RUNNING',
+        details: {},
+        isActive: true,
+        overStandard: false
+    };
+    
+    timeline.push(newActivity);
+    activeActivity = newActivity;
+    renderTimeline();
+    updateButtonsState();
+    addAuditLog('ACTIVITY', `MULAI RUNNING DI ${currentMachine}`);
+}
+
+function handleStop() {
+    if (!currentMachine || shiftEnded) return;
+    
+    // Stop aktivitas sebelumnya
+    if (activeActivity) {
+        activeActivity.isActive = false;
+        activeActivity.endTime = getCurrentTime();
+    }
+    
+    // Buat baris baru (kosong) untuk diisi nanti
+    const newRow = {
+        id: 'row-' + Date.now(),
+        startTime: getCurrentTime(),
+        endTime: null,
+        kode: null,
+        kegiatanId: null,
+        kegiatanNama: null,
+        durasiStandard: 0,
+        durasiAktual: null,
+        activity: null,
+        details: {},
+        isActive: true,
+        overStandard: false
+    };
+    
+    timeline.push(newRow);
+    activeActivity = newRow;
+    renderTimeline();
+    updateButtonsState();
+    addAuditLog('ACTIVITY', `TAMBAH BARIS BARU DI ${currentMachine}`);
+}
+
+// ==================== MINOR ====================
+function openMinorForm() {
+    if (!currentMachine || shiftEnded) return;
+    
+    const modal = document.getElementById('minorModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+function closeMinorModal() {
+    const modal = document.getElementById('minorModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+function saveMinor() {
+    const masalahSelect = document.getElementById('minorMasalah');
+    const frekuensiInput = document.getElementById('minorFrekuensi');
+    
+    if (!masalahSelect || !frekuensiInput) return;
+    
+    const masalah = masalahSelect.value;
+    const frekuensi = frekuensiInput.value;
+    
+    if (!masalah || !frekuensi) {
+        alert('ISI SEMUA FIELD!');
+        return;
+    }
+    
+    minorStoppages.push({
+        masalah: masalah,
+        frekuensi: frekuensi,
+        waktu: getCurrentTime()
+    });
+    
+    renderMinorStoppages();
+    closeMinorModal();
+    addAuditLog('MINOR', `TAMBAH ${masalah} (${frekuensi}X) DI ${currentMachine}`);
+}
+
+// ==================== UTILS ====================
+function getCurrentTime() {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+}
+
+function calculateDuration(start, end) {
+    const [startH, startM] = start.split(':').map(Number);
+    const [endH, endM] = end.split(':').map(Number);
+    let startMinutes = startH * 60 + startM;
+    let endMinutes = endH * 60 + endM;
+    if (endMinutes < startMinutes) endMinutes += 24 * 60;
+    return endMinutes - startMinutes;
+}
+
+// ==================== SHIFT ====================
+function endShift() {
+    if (!currentMachine) {
+        alert('PILIH MESIN DULU!');
+        return;
+    }
+    
+    // Validasi: cek apakah ada baris tanpa kode (selain running)
+    const hasEmptyRow = timeline.some(row => !row.kode && !row.isActive);
+    if (hasEmptyRow) {
+        alert('TIDAK BISA AKHIRI SHIFT! ADA BARIS YANG BELUM DIISI KODE.');
+        return;
+    }
+    
+    if (confirm('YAKIN INGIN MENGAKHIRI SHIFT?')) {
+        if (activeActivity) {
+            activeActivity.isActive = false;
+            activeActivity.endTime = getCurrentTime();
+        }
+        shiftEnded = true;
+        updateButtonsState();
+        renderTimeline();
+        addAuditLog('SHIFT', `SHIFT SELESAI UNTUK ${currentMachine}`);
+        alert('SHIFT SELESAI! DATA TERSIMPAN.');
+    }
+}
+
+// ==================== AUDIT ====================
+function addAuditLog(activity, details) {
+    auditLogs.unshift({
+        timestamp: new Date().toLocaleString('id-ID'),
+        user: currentUser || 'SYSTEM',
+        role: currentRole || 'SYSTEM',
+        activity: activity,
+        details: details
+    });
+    
+    const container = document.getElementById('auditContainer');
+    if (container) {
+        let html = '';
+        auditLogs.slice(0, 20).forEach(log => {
+            html += `
+                <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold">${log.user}</span>
+                            <span class="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">${log.role}</span>
+                        </div>
+                        <span class="text-sm text-gray-500">${log.timestamp}</span>
+                    </div>
+                    <p class="text-sm"><span class="font-medium">${log.activity}:</span> ${log.details}</p>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+}
+
+// ==================== DARK MODE ====================
+function toggleDarkMode() {
+    document.documentElement.classList.toggle('dark');
+    const icon = document.getElementById('darkModeIcon');
+    if (document.documentElement.classList.contains('dark')) {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+    } else {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+    }
+}
+</script>
+
+</body>
+</html>
