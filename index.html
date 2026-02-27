@@ -130,11 +130,11 @@
             transform: scale(1.05);
         }
         
-        .summary-section {
+        .summary-card {
             border-left: 4px solid;
             transition: all 0.2s ease;
         }
-        .summary-section:hover {
+        .summary-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
@@ -146,6 +146,15 @@
         }
         .dark .score-card-item {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+        
+        .production-input {
+            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+            border: 2px solid #8b5cf6;
+        }
+        .dark .production-input {
+            background: linear-gradient(135deg, #2e1065 0%, #4c1d95 100%);
+            border: 2px solid #a78bfa;
         }
     </style>
 </head>
@@ -440,8 +449,11 @@
                         <div id="timelineContainer" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
                     </div>
 
-                    <!-- RINGKASAN SECTION -->
+                    <!-- RINGKASAN SECTION (DENGAN RUNNING TIME) -->
                     <div id="summaryContainer" class="mt-8"></div>
+
+                    <!-- INPUT PRODUKSI SECTION (BARU) -->
+                    <div id="productionInputContainer" class="mt-8"></div>
 
                     <!-- SCORE CARD SECTION -->
                     <div id="scoreCardContainer" class="mt-8"></div>
@@ -899,6 +911,10 @@ let activeActivity = null;
 let auditLogs = [];
 let shiftEnded = false;
 
+// Variabel untuk input produksi
+let outputActual = 0;
+let rejectActual = 0;
+
 // Kode yang WAJIB punya standard dan termasuk ODT
 const KODE_WITH_STANDARD = ['1', '5', '7', '8'];
 const ODT_CODES = ['1', '5', '6', '7', '8']; // Kode 2 Running tidak termasuk downtime
@@ -1085,6 +1101,8 @@ function logout() {
         minorStoppages = [];
         activeActivity = null;
         shiftEnded = false;
+        outputActual = 0;
+        rejectActual = 0;
         
         document.getElementById('main-app').classList.add('hidden');
         document.getElementById('login-page').classList.remove('hidden');
@@ -1102,6 +1120,7 @@ function logout() {
         
         renderMinorStoppages();
         renderSummary();
+        renderProductionInput();
         renderScoreCard();
     }
 }
@@ -1626,6 +1645,8 @@ function changeMachine() {
         minorStoppages = [];
         activeActivity = null;
         shiftEnded = false;
+        outputActual = 0;
+        rejectActual = 0;
         
         updateButtonsState();
         
@@ -1671,6 +1692,7 @@ function changeMachine() {
         renderTimeline();
         renderMinorStoppages();
         renderSummary();
+        renderProductionInput();
         renderScoreCard();
         addAuditLog('MACHINE', `PILIH MESIN ${currentMachine}`);
     } else {
@@ -1680,6 +1702,7 @@ function changeMachine() {
         document.getElementById('timelineContainer').innerHTML = '<div class="text-center text-gray-400 py-8"><i class="fas fa-arrow-up text-3xl mb-2"></i><p>PILIH MESIN TERLEBIH DAHULU</p></div>';
         renderMinorStoppages();
         renderSummary();
+        renderProductionInput();
         renderScoreCard();
     }
 }
@@ -1855,6 +1878,7 @@ function stopActiveRow(rowId) {
     renderTimeline();
     updateButtonsState();
     renderSummary();
+    renderProductionInput();
     renderScoreCard();
     addAuditLog('ACTIVITY', `HENTIKAN KEGIATAN DI ${currentMachine}`);
 }
@@ -1884,6 +1908,17 @@ function addMinutes(time, minutes) {
     return `${newHours.toString().padStart(2, '0')}:${newMins.toString().padStart(2, '0')}`;
 }
 
+// ==================== FUNGSI UNTUK MENGHITUNG RUNNING TIME ====================
+function calculateRunningTime() {
+    let totalRunning = 0;
+    timeline.forEach(row => {
+        if (row.kode === '2' && row.endTime) {
+            totalRunning += calculateDuration(row.startTime, row.endTime);
+        }
+    });
+    return totalRunning;
+}
+
 // ==================== SUMMARY ====================
 function calculateSummary() {
     let odtTotal = 0;
@@ -1902,8 +1937,6 @@ function calculateSummary() {
         // ODT: Kode 1,5,6,7,8 (Kode 2 Running tidak dihitung sebagai downtime)
         // dan baris yang bukan hasil split
         if (['1', '5', '6', '7', '8'].includes(row.kode) && !row.details?.isOver) {
-            // Untuk ODT dengan standard, durasi yang ditampilkan adalah durasi baris ini
-            // (yang sudah merupakan hasil split jika over)
             odtTotal += durasi;
             odtDetails.push({
                 nama: row.kegiatanNama || `KODE ${row.kode}`,
@@ -1951,6 +1984,7 @@ function renderSummary() {
     }
     
     const summary = calculateSummary();
+    const runningTime = calculateRunningTime();
     
     let html = `
         <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl mb-6">
@@ -1959,59 +1993,29 @@ function renderSummary() {
                 RINGKASAN
             </h3>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- ODT Section -->
-                <div class="summary-section bg-white dark:bg-gray-800 p-4 rounded-xl border-l-4 border-blue-500">
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="font-bold text-blue-600">OFFICIAL DOWNTIME</span>
-                        <span class="ml-auto font-bold text-blue-600">${summary.odt.total} MENIT</span>
-                    </div>
-                    <div class="space-y-2 max-h-40 overflow-y-auto">
-                        ${summary.odt.details.length > 0 ? summary.odt.details.map(d => {
-                            let displayText = d.nama;
-                            if (d.standard > 0) {
-                                displayText += d.durasi <= d.standard ? ' (STANDARD)' : ' (STANDARD)';
-                            }
-                            return `
-                                <div class="text-sm flex justify-between items-center">
-                                    <span>${displayText}</span>
-                                    <span class="font-medium">${d.durasi} MENIT</span>
-                                </div>
-                            `;
-                        }).join('') : '<div class="text-sm text-gray-500">TIDAK ADA DATA</div>'}
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- ODT -->
+                <div class="summary-card bg-white dark:bg-gray-800 p-4 rounded-xl border-l-4 border-blue-500">
+                    <div class="text-sm text-gray-500 dark:text-gray-400">OFFICIAL DOWNTIME</div>
+                    <div class="text-2xl font-bold text-blue-600">${summary.odt.total} MENIT</div>
                 </div>
                 
                 <!-- Line Stop Mesin -->
-                <div class="summary-section bg-white dark:bg-gray-800 p-4 rounded-xl border-l-4 border-red-500">
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="font-bold text-red-600">LINE STOP MESIN</span>
-                        <span class="ml-auto font-bold text-red-600">${summary.lineStop.total} MENIT</span>
-                    </div>
-                    <div class="space-y-2 max-h-40 overflow-y-auto">
-                        ${summary.lineStop.details.length > 0 ? summary.lineStop.details.map(d => `
-                            <div class="text-sm flex justify-between items-center">
-                                <span>${d.nama}</span>
-                                <span class="font-medium">${d.durasi} MENIT</span>
-                            </div>
-                        `).join('') : '<div class="text-sm text-gray-500">TIDAK ADA DATA</div>'}
-                    </div>
+                <div class="summary-card bg-white dark:bg-gray-800 p-4 rounded-xl border-l-4 border-red-500">
+                    <div class="text-sm text-gray-500 dark:text-gray-400">LINE STOP MESIN</div>
+                    <div class="text-2xl font-bold text-red-600">${summary.lineStop.total} MENIT</div>
                 </div>
                 
                 <!-- Line Stop Non Mesin -->
-                <div class="summary-section bg-white dark:bg-gray-800 p-4 rounded-xl border-l-4 border-yellow-500">
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="font-bold text-yellow-600">LINE STOP NON MESIN</span>
-                        <span class="ml-auto font-bold text-yellow-600">${summary.lineStopNonMesin.total} MENIT</span>
-                    </div>
-                    <div class="space-y-2 max-h-40 overflow-y-auto">
-                        ${summary.lineStopNonMesin.details.length > 0 ? summary.lineStopNonMesin.details.map(d => `
-                            <div class="text-sm flex justify-between items-center">
-                                <span>${d.nama} ${d.sumber ? `(${d.sumber})` : ''}</span>
-                                <span class="font-medium">${d.durasi} MENIT</span>
-                            </div>
-                        `).join('') : '<div class="text-sm text-gray-500">TIDAK ADA DATA</div>'}
-                    </div>
+                <div class="summary-card bg-white dark:bg-gray-800 p-4 rounded-xl border-l-4 border-yellow-500">
+                    <div class="text-sm text-gray-500 dark:text-gray-400">LINE STOP NON MESIN</div>
+                    <div class="text-2xl font-bold text-yellow-600">${summary.lineStopNonMesin.total} MENIT</div>
+                </div>
+                
+                <!-- Running Time -->
+                <div class="summary-card bg-white dark:bg-gray-800 p-4 rounded-xl border-l-4 border-green-500">
+                    <div class="text-sm text-gray-500 dark:text-gray-400">TOTAL RUNNING TIME</div>
+                    <div class="text-2xl font-bold text-green-600">${runningTime} MENIT</div>
                 </div>
             </div>
         </div>
@@ -2020,9 +2024,81 @@ function renderSummary() {
     container.innerHTML = html;
 }
 
+// ==================== INPUT PRODUKSI ====================
+function renderProductionInput() {
+    const container = document.getElementById('productionInputContainer');
+    if (!container) return;
+    
+    if (!currentMachine || timeline.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    const runningTime = calculateRunningTime();
+    const targetPerMinute = currentMachineObj ? currentMachineObj.target : 0;
+    const targetOutput = runningTime * targetPerMinute;
+    
+    let html = `
+        <div class="production-input p-6 rounded-xl mb-6">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-purple-600 dark:text-purple-400">
+                <i class="fas fa-industry"></i>
+                INPUT PRODUKSI
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">OUTPUT ACTUAL (PCS)</label>
+                    <input type="number" id="outputActual" min="0" value="${outputActual}" 
+                           class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-lg focus:border-purple-500 focus:outline-none bg-white dark:bg-gray-700"
+                           onchange="validateProductionInput()" onkeyup="validateProductionInput()">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">REJECT (PCS)</label>
+                    <input type="number" id="rejectActual" min="0" value="${rejectActual}" 
+                           class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-lg focus:border-purple-500 focus:outline-none bg-white dark:bg-gray-700"
+                           onchange="validateProductionInput()" onkeyup="validateProductionInput()">
+                </div>
+            </div>
+            
+            <div id="rejectWarning" class="text-sm text-red-600 mb-4 ${rejectActual > outputActual ? '' : 'hidden'}">
+                ⚠️ REJECT TIDAK BOLEH MELEBIHI OUTPUT ACTUAL!
+            </div>
+            
+            <div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-6 rounded-xl text-white">
+                <div class="text-sm opacity-90 mb-1">TARGET BERDASARKAN RUNNING TIME</div>
+                <div class="text-lg mb-2">TARGET MESIN: ${targetPerMinute} PCS/MENIT</div>
+                <div class="text-3xl font-bold">${runningTime} × ${targetPerMinute} = ${targetOutput.toLocaleString()} PCS</div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// ==================== VALIDASI INPUT PRODUKSI ====================
+function validateProductionInput() {
+    const output = parseInt(document.getElementById('outputActual')?.value) || 0;
+    const reject = parseInt(document.getElementById('rejectActual')?.value) || 0;
+    const warning = document.getElementById('rejectWarning');
+    
+    outputActual = output;
+    rejectActual = reject;
+    
+    if (reject > output) {
+        warning.classList.remove('hidden');
+        return false;
+    } else {
+        warning.classList.add('hidden');
+        // Update score card setiap kali input berubah
+        renderScoreCard();
+        return true;
+    }
+}
+
 // ==================== SCORE CARD ====================
 function calculateScoreCard() {
     const summary = calculateSummary();
+    const runningTime = calculateRunningTime();
     const jamKerja = currentShift.duration;
     
     // Total downtime
@@ -2030,8 +2106,7 @@ function calculateScoreCard() {
     const totalLineStopNonMesin = summary.lineStopNonMesin.total;
     const totalODT = summary.odt.total;
     
-    // Rumus Availability
-    // (JK - LS - LSNM - ODT) / (JK - ODT)
+    // Availability
     const pembilang = jamKerja - totalLineStop - totalLineStopNonMesin - totalODT;
     const penyebutAvailability = jamKerja - totalODT;
     const penyebut365 = jamKerja;
@@ -2039,14 +2114,33 @@ function calculateScoreCard() {
     const availability = penyebutAvailability > 0 ? (pembilang / penyebutAvailability * 100).toFixed(1) : 0;
     const availability365 = penyebut365 > 0 ? (pembilang / penyebut365 * 100).toFixed(1) : 0;
     
+    // Performance
+    let performance = 0;
+    if (runningTime > 0 && currentMachineObj) {
+        const targetPerMinute = currentMachineObj.target;
+        const targetOutput = runningTime * targetPerMinute;
+        if (targetOutput > 0) {
+            performance = (outputActual / targetOutput * 100).toFixed(1);
+        }
+    }
+    
+    // Quality Rate
+    let quality = 0;
+    if (outputActual > 0) {
+        quality = ((outputActual - rejectActual) / outputActual * 100).toFixed(1);
+    }
+    
+    // OEE
+    const oeeActual = (availability * performance * quality / 10000).toFixed(1);
+    const oee365 = (availability365 * performance * quality / 10000).toFixed(1);
+    
     return {
         availability,
         availability365,
-        // Performance, Quality, OEE menyusul nanti
-        performance: '0',
-        quality: '0',
-        oeeActual: '0',
-        oee365: '0'
+        performance,
+        quality,
+        oeeActual,
+        oee365
     };
 }
 
@@ -2081,25 +2175,25 @@ function renderScoreCard() {
                     <div class="text-3xl font-bold text-green-600">${scores.availability365}%</div>
                 </div>
                 
-                <!-- Performance (placeholder) -->
+                <!-- Performance -->
                 <div class="score-card-item">
                     <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">PERFORMANCE</div>
                     <div class="text-3xl font-bold text-purple-600">${scores.performance}%</div>
                 </div>
                 
-                <!-- Quality Rate (placeholder) -->
+                <!-- Quality Rate -->
                 <div class="score-card-item">
                     <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">QUALITY RATE</div>
                     <div class="text-3xl font-bold text-yellow-600">${scores.quality}%</div>
                 </div>
                 
-                <!-- OEE Actual (placeholder) -->
+                <!-- OEE Actual -->
                 <div class="score-card-item">
                     <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">OEE ACTUAL</div>
                     <div class="text-3xl font-bold text-red-600">${scores.oeeActual}%</div>
                 </div>
                 
-                <!-- OEE 365 (placeholder) -->
+                <!-- OEE 365 -->
                 <div class="score-card-item">
                     <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">OEE 365</div>
                     <div class="text-3xl font-bold text-indigo-600">${scores.oee365}%</div>
@@ -2378,6 +2472,7 @@ function saveEditActivity() {
     
     renderTimeline();
     renderSummary();
+    renderProductionInput();
     renderScoreCard();
     closeEditModal();
     addAuditLog('ACTIVITY', `EDIT KEGIATAN: ${newKode} - ${row.kegiatanNama || ''}`);
@@ -2426,6 +2521,7 @@ function handleRunning() {
     activeActivity = newActivity;
     renderTimeline();
     renderSummary();
+    renderProductionInput();
     renderScoreCard();
     updateButtonsState();
     addAuditLog('ACTIVITY', `MULAI RUNNING DI ${currentMachine}`);
@@ -2460,6 +2556,7 @@ function handleStop() {
     activeActivity = newRow;
     renderTimeline();
     renderSummary();
+    renderProductionInput();
     renderScoreCard();
     updateButtonsState();
     addAuditLog('ACTIVITY', `TAMBAH BARIS BARU DI ${currentMachine}`);
@@ -2538,6 +2635,18 @@ function endShift() {
         return;
     }
     
+    // Validasi: output actual harus diisi
+    if (outputActual <= 0) {
+        alert('ISI OUTPUT ACTUAL TERLEBIH DAHULU!');
+        return;
+    }
+    
+    // Validasi: reject tidak boleh > output
+    if (rejectActual > outputActual) {
+        alert('REJECT TIDAK BOLEH MELEBIHI OUTPUT ACTUAL!');
+        return;
+    }
+    
     if (confirm('YAKIN INGIN MENGAKHIRI SHIFT?')) {
         if (activeActivity) {
             activeActivity.isActive = false;
@@ -2547,6 +2656,7 @@ function endShift() {
         updateButtonsState();
         renderTimeline();
         renderSummary();
+        renderProductionInput();
         renderScoreCard();
         addAuditLog('SHIFT', `SHIFT SELESAI UNTUK ${currentMachine}`);
         alert('SHIFT SELESAI! DATA TERSIMPAN.');
