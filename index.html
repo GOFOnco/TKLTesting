@@ -901,7 +901,7 @@ let shiftEnded = false;
 
 // Kode yang WAJIB punya standard dan termasuk ODT
 const KODE_WITH_STANDARD = ['1', '5', '7', '8'];
-const ODT_CODES = ['1', '2', '5', '6', '7', '8']; // Kode 2 tetap dihitung sebagai production time
+const ODT_CODES = ['1', '5', '6', '7', '8']; // Kode 2 Running tidak termasuk downtime
 
 // Master data dengan kegiatan per kode
 let machines = [
@@ -1900,13 +1900,17 @@ function calculateSummary() {
         const durasi = calculateDuration(row.startTime, row.endTime);
         
         // ODT: Kode 1,5,6,7,8 (Kode 2 Running tidak dihitung sebagai downtime)
+        // dan baris yang bukan hasil split
         if (['1', '5', '6', '7', '8'].includes(row.kode) && !row.details?.isOver) {
+            // Untuk ODT dengan standard, durasi yang ditampilkan adalah durasi baris ini
+            // (yang sudah merupakan hasil split jika over)
             odtTotal += durasi;
             odtDetails.push({
                 nama: row.kegiatanNama || `KODE ${row.kode}`,
                 durasi: durasi,
                 standard: row.durasiStandard,
-                isOver: row.details?.isOver || false
+                isOver: row.details?.isOver || false,
+                kode: row.kode
             });
         }
         // Line Stop Mesin: Kode 3
@@ -1924,7 +1928,8 @@ function calculateSummary() {
             lineStopNonMesinDetails.push({
                 nama: row.kegiatanNama || 'LINE STOP NON MESIN',
                 durasi: durasi,
-                isOver: row.details?.isOver || false
+                isOver: row.details?.isOver || false,
+                sumber: row.details?.isOver ? 'OVER DARI STANDARD' : ''
             });
         }
     });
@@ -1962,12 +1967,18 @@ function renderSummary() {
                         <span class="ml-auto font-bold text-blue-600">${summary.odt.total} MENIT</span>
                     </div>
                     <div class="space-y-2 max-h-40 overflow-y-auto">
-                        ${summary.odt.details.length > 0 ? summary.odt.details.map(d => `
-                            <div class="text-sm flex justify-between items-center">
-                                <span>${d.nama}</span>
-                                <span class="font-medium">${d.durasi} MENIT</span>
-                            </div>
-                        `).join('') : '<div class="text-sm text-gray-500">TIDAK ADA DATA</div>'}
+                        ${summary.odt.details.length > 0 ? summary.odt.details.map(d => {
+                            let displayText = d.nama;
+                            if (d.standard > 0) {
+                                displayText += d.durasi <= d.standard ? ' (STANDARD)' : ' (STANDARD)';
+                            }
+                            return `
+                                <div class="text-sm flex justify-between items-center">
+                                    <span>${displayText}</span>
+                                    <span class="font-medium">${d.durasi} MENIT</span>
+                                </div>
+                            `;
+                        }).join('') : '<div class="text-sm text-gray-500">TIDAK ADA DATA</div>'}
                     </div>
                 </div>
                 
@@ -1996,7 +2007,7 @@ function renderSummary() {
                     <div class="space-y-2 max-h-40 overflow-y-auto">
                         ${summary.lineStopNonMesin.details.length > 0 ? summary.lineStopNonMesin.details.map(d => `
                             <div class="text-sm flex justify-between items-center">
-                                <span>${d.nama}</span>
+                                <span>${d.nama} ${d.sumber ? `(${d.sumber})` : ''}</span>
                                 <span class="font-medium">${d.durasi} MENIT</span>
                             </div>
                         `).join('') : '<div class="text-sm text-gray-500">TIDAK ADA DATA</div>'}
@@ -2340,7 +2351,7 @@ function saveEditActivity() {
             // Hitung waktu mulai untuk baris over (mundur dari endTime)
             const overStartTime = addMinutes(row.endTime, -kelebihan);
             
-            // Ubah durasi baris ini menjadi standard
+            // Buat baris over
             const overRow = {
                 id: 'row-' + Date.now() + '-over',
                 startTime: overStartTime,
@@ -2359,6 +2370,9 @@ function saveEditActivity() {
             // Insert setelah baris utama
             const index = timeline.findIndex(r => r.id === row.id);
             timeline.splice(index + 1, 0, overRow);
+            
+            // Ubah durasi baris utama menjadi standard
+            row.endTime = addMinutes(row.endTime, -kelebihan);
         }
     }
     
